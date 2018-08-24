@@ -24,14 +24,12 @@ public class RentalService {
         rentalTruckRepository.save(rentalTruck);
     }
 
-    public RentalTruck create(String customerName, TruckSize truckSize) {
+    public void create(String customerName, TruckSize truckSize) {
         RentalTruck rentalTruck = truckAllocationService.allocateTruck(truckSize);
 
         rentalTruck.reserve(customerName);
 
         rentalTruckRepository.save(rentalTruck);
-
-        return rentalTruck;
     }
 
     public void pickUp(ConfirmationNumber confirmationNumber) {
@@ -45,7 +43,7 @@ public class RentalService {
         rentalTruckRepository.save(rentalTruck);
     }
 
-    public RentalTruck dropOff(ConfirmationNumber confirmationNumber, int distanceTraveled) {
+    public void dropOff(ConfirmationNumber confirmationNumber, int distanceTraveled) {
         RentalTruck rentalTruck = rentalTruckRepository.findOneByRentalConfirmationNumber(confirmationNumber.getConfirmationNumber());
         if (rentalTruck == null) {
             throw new IllegalArgumentException(String.format("No rental found for id=%s", confirmationNumber));
@@ -54,8 +52,6 @@ public class RentalService {
         rentalTruck.dropOff(distanceTraveled);
 
         rentalTruckRepository.save(rentalTruck);
-
-        return rentalTruck;
     }
 
     public void preventRenting(Vin vin) {

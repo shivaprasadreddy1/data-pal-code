@@ -2,10 +2,7 @@ package io.pivotal.pal.wehaul.application;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.pivotal.pal.wehaul.fleet.domain.FleetService;
-import io.pivotal.pal.wehaul.fleet.domain.Vin;
 import io.pivotal.pal.wehaul.rental.domain.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,18 +15,9 @@ import java.util.stream.Collectors;
 public class RentalController {
 
     private final RentalService rentalService;
-    private final FleetService fleetService;
 
     public RentalController(RentalService rentalService) {
         this.rentalService = rentalService;
-        this.fleetService = null;
-    }
-
-    @Deprecated
-    @Autowired
-    public RentalController(RentalService rentalService, FleetService fleetService) {
-        this.rentalService = rentalService;
-        this.fleetService = fleetService;
     }
 
     @PostMapping
@@ -37,8 +25,7 @@ public class RentalController {
 
         String customerName = createRentalDto.getCustomerName();
         String truckSize = createRentalDto.getTruckSize();
-        RentalTruck rentalTruck = rentalService.create(customerName, TruckSize.valueOf(truckSize));
-        fleetService.removeFromYard(Vin.of(rentalTruck.getVin().getVin()));
+        rentalService.create(customerName, TruckSize.valueOf(truckSize));
 
         return ResponseEntity.ok().build();
     }
@@ -55,8 +42,7 @@ public class RentalController {
                                               @RequestBody DropOffRentalDto dropOffRentalDto) {
 
         int distanceTraveled = dropOffRentalDto.getDistanceTraveled();
-        RentalTruck rentalTruck = rentalService.dropOff(ConfirmationNumber.of(confirmationNumber), distanceTraveled);
-        fleetService.returnToYard(Vin.of(rentalTruck.getVin().getVin()), dropOffRentalDto.getDistanceTraveled());
+        rentalService.dropOff(ConfirmationNumber.of(confirmationNumber), distanceTraveled);
 
         return ResponseEntity.ok().build();
     }
