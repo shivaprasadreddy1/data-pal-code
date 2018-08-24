@@ -1,6 +1,5 @@
 package io.pivotal.pal.wehaul.fleet.domain;
 
-import javax.transaction.Transactional;
 import java.util.Collection;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -8,12 +7,9 @@ import java.util.stream.StreamSupport;
 public class FleetService {
 
     private final FleetTruckRepository fleetTruckRepository;
-    private final TruckInspectionRepository truckInspectionRepository;
 
-    public FleetService(FleetTruckRepository fleetTruckRepository,
-                        TruckInspectionRepository truckInspectionRepository) {
+    public FleetService(FleetTruckRepository fleetTruckRepository) {
         this.fleetTruckRepository = fleetTruckRepository;
-        this.truckInspectionRepository = truckInspectionRepository;
     }
 
     public FleetTruck buyTruck(Vin vin, int odometerReading, int truckLength) {
@@ -24,7 +20,6 @@ public class FleetService {
         return fleetTruck;
     }
 
-    @Transactional
     public void sendForInspection(Vin vin) {
         FleetTruck fleetTruck = fleetTruckRepository.findOne(vin);
 
@@ -37,7 +32,6 @@ public class FleetService {
         fleetTruckRepository.save(fleetTruck);
     }
 
-    @Transactional
     public void returnFromInspection(Vin vin, String notes, int odometerReading) {
         FleetTruck fleetTruck = fleetTruckRepository.findOne(vin);
 
@@ -45,11 +39,9 @@ public class FleetService {
             throw new IllegalArgumentException(String.format("No truck found with VIN=%s", vin));
         }
 
-        fleetTruck.returnFromInspection(odometerReading);
-        fleetTruckRepository.save(fleetTruck);
+        fleetTruck.returnFromInspection(notes, odometerReading);
 
-        TruckInspection truckInspection = new TruckInspection(vin, odometerReading, notes);
-        truckInspectionRepository.save(truckInspection);
+        fleetTruckRepository.save(fleetTruck);
     }
 
     public void removeFromYard(Vin vin) {

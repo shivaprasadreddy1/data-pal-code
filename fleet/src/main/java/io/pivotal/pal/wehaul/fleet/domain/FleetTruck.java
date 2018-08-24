@@ -1,6 +1,8 @@
 package io.pivotal.pal.wehaul.fleet.domain;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity(name = "fleetTruck")
 @Table(name = "fleet_truck")
@@ -19,6 +21,10 @@ public class FleetTruck {
     @Column
     private Integer truckLength;
 
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinColumn(name = "truckVin", referencedColumnName = "vin")
+    private List<TruckInspection> inspections = new ArrayList<>();
+
     FleetTruck() {
         // default constructor required by JPA
     }
@@ -34,7 +40,7 @@ public class FleetTruck {
         this.truckLength = truckLength;
     }
 
-    public void returnFromInspection(int odometerReading) {
+    public void returnFromInspection(String notes, int odometerReading) {
         if (status != FleetTruckStatus.IN_INSPECTION) {
             throw new IllegalStateException("Truck is not currently in inspection");
         }
@@ -44,6 +50,9 @@ public class FleetTruck {
 
         this.status = FleetTruckStatus.INSPECTABLE;
         this.odometerReading = odometerReading;
+
+        TruckInspection truckInspection = new TruckInspection(this.vin, odometerReading, notes);
+        this.inspections.add(truckInspection);
     }
 
     public void sendForInspection() {
@@ -90,13 +99,18 @@ public class FleetTruck {
         return truckLength;
     }
 
+    public List<TruckInspection> getInspections() {
+        return inspections;
+    }
+
     @Override
     public String toString() {
-        return "Truck{" +
+        return "FleetTruck{" +
                 "vin=" + vin +
                 ", status=" + status +
                 ", odometerReading=" + odometerReading +
                 ", truckLength=" + truckLength +
+                ", inspections=" + inspections +
                 '}';
     }
 }

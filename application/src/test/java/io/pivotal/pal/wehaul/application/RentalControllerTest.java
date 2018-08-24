@@ -43,9 +43,9 @@ public class RentalControllerTest {
 
     @Test
     public void createRental() throws Exception {
-        Rental mockRental = mock(Rental.class);
-        when(mockRental.getTruckVin()).thenReturn(Vin.of("some-vin"));
-        when(mockRentalService.create(any(), any())).thenReturn(mockRental);
+        RentalTruck mockRentalTruck = mock(RentalTruck.class);
+        when(mockRentalTruck.getVin()).thenReturn(Vin.of("some-vin"));
+        when(mockRentalService.create(any(), any())).thenReturn(mockRentalTruck);
 
         RentalController.CreateRentalDto requestDto = new RentalController.CreateRentalDto("some-customer-name", "SMALL");
         String requestBody = objectMapper.writeValueAsString(requestDto);
@@ -81,10 +81,10 @@ public class RentalControllerTest {
 
     @Test
     public void dropOffRental() throws Exception {
-        Rental mockRental = mock(Rental.class);
-        Vin rentalVin = Vin.of("some-vin");
-        when(mockRental.getTruckVin()).thenReturn(rentalVin);
-        when(mockRentalService.dropOff(any(), anyInt())).thenReturn(mockRental);
+        RentalTruck mockRentalTruck = mock(RentalTruck.class);
+        Vin vin = Vin.of("some-vin");
+        when(mockRentalTruck.getVin()).thenReturn(vin);
+        when(mockRentalService.dropOff(any(), anyInt())).thenReturn(mockRentalTruck);
 
         RentalController.DropOffRentalDto requestDto = new RentalController.DropOffRentalDto(500);
         String requestBody = objectMapper.writeValueAsString(requestDto);
@@ -107,19 +107,21 @@ public class RentalControllerTest {
 
     @Test
     public void getAllRentals() throws Exception {
-        Rental rental1 = new Rental("some-customer-name-1", Vin.of("test-0001"));
-        Rental rental2 = new Rental("some-customer-name-2", Vin.of("test-0002"));
-        List<Rental> rentals = Arrays.asList(rental1, rental2);
+        RentalTruck rentalTruck1 = new RentalTruck(Vin.of("test-0001"), TruckSize.SMALL);
+        rentalTruck1.reserve("some-customer-name-1");
+        RentalTruck rentalTruck2 = new RentalTruck(Vin.of("test-0002"), TruckSize.LARGE);
+        rentalTruck2.reserve("some-customer-name-2");
+        List<RentalTruck> rentals = Arrays.asList(rentalTruck1, rentalTruck2);
         when(mockRentalService.findAll()).thenReturn(rentals);
 
         RentalController.RentalDto rentalDto1 = new RentalController.RentalDto(
-                rental1.getConfirmationNumber().getConfirmationNumber().toString(),
+                rentalTruck1.getRental().getConfirmationNumber().getConfirmationNumber().toString(),
                 "some-customer-name-1",
                 "test-0001",
                 null
         );
         RentalController.RentalDto rentalDto2 = new RentalController.RentalDto(
-                rental2.getConfirmationNumber().getConfirmationNumber().toString(),
+                rentalTruck2.getRental().getConfirmationNumber().getConfirmationNumber().toString(),
                 "some-customer-name-2",
                 "test-0002",
                 null

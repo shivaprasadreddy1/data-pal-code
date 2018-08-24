@@ -27,7 +27,7 @@ public class RentalTruck {
         this.truckSize = truckSize;
     }
 
-    public void reserve() {
+    public void reserve(String customerName) {
         if (status != RentalTruckStatus.RENTABLE) {
             throw new IllegalStateException("Truck cannot be reserved");
         }
@@ -43,7 +43,7 @@ public class RentalTruck {
         this.status = RentalTruckStatus.RENTED;
     }
 
-    public void dropOff() {
+    public void dropOff(int distanceTraveled) {
         if (status != RentalTruckStatus.RENTED) {
             throw new IllegalStateException("Truck is not currently rented");
         }
@@ -78,9 +78,13 @@ public class RentalTruck {
         return truckSize;
     }
 
+    public Rental getRental() {
+        return null;
+    }
+
     @Override
     public String toString() {
-        return "Truck{" +
+        return "RentalTruck{" +
                 "vin=" + vin +
                 ", status=" + status +
                 ", truckSize=" + truckSize +

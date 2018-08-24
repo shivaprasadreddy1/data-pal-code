@@ -1,9 +1,11 @@
 package io.pivotal.pal.wehaul.application;
 
 import io.pivotal.pal.wehaul.fleet.domain.FleetService;
-import io.pivotal.pal.wehaul.fleet.domain.TruckInspectionRepository;
 import io.pivotal.pal.wehaul.fleet.domain.FleetTruckRepository;
-import io.pivotal.pal.wehaul.rental.domain.*;
+import io.pivotal.pal.wehaul.rental.domain.RentalService;
+import io.pivotal.pal.wehaul.rental.domain.RentalTruckRepository;
+import io.pivotal.pal.wehaul.rental.domain.TruckAllocationService;
+import io.pivotal.pal.wehaul.rental.domain.TruckSizeChart;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -21,19 +23,16 @@ public class AppConfig {
     }
 
     @Bean
-    public FleetService fleetService(FleetTruckRepository fleetTruckRepository,
-                                     TruckInspectionRepository truckInspectionRepository) {
+    public FleetService fleetService(FleetTruckRepository fleetTruckRepository) {
         return new FleetService(
-                fleetTruckRepository,
-                truckInspectionRepository
+                fleetTruckRepository
         );
     }
 
     @Bean
     public RentalService rentalService(TruckAllocationService truckAllocationService,
-                                       RentalRepository rentalRepository,
                                        RentalTruckRepository rentalTruckRepository,
                                        TruckSizeChart truckSizeChart) {
-        return new RentalService(truckAllocationService, rentalRepository, rentalTruckRepository, truckSizeChart);
+        return new RentalService(truckAllocationService, rentalTruckRepository, truckSizeChart);
     }
 }

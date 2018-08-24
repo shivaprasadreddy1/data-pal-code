@@ -35,16 +35,21 @@ public class FleetTruckTest {
 
     @Test
     public void returnFromInspection() {
-        FleetTruck fleetTruck = new FleetTruck(Vin.of("test-0001"), 0, 10);
+        Vin vin = Vin.of("test-0001");
+        FleetTruck fleetTruck = new FleetTruck(vin, 0, 10);
         fleetTruck.sendForInspection();
         int odometerReading = 1;
+        String notes = "some-notes";
+        TruckInspection truckInspection = new TruckInspection(vin, odometerReading, notes);
 
 
-        fleetTruck.returnFromInspection(odometerReading);
+        fleetTruck.returnFromInspection(notes, odometerReading);
 
 
         assertThat(fleetTruck.getStatus()).isEqualTo(FleetTruckStatus.INSPECTABLE);
         assertThat(fleetTruck.getOdometerReading()).isEqualTo(odometerReading);
+        assertThat(fleetTruck.getInspections().size()).isEqualTo(1);
+        assertThat(fleetTruck.getInspections().get(0)).isEqualToComparingOnlyGivenFields(truckInspection, "truckVin", "odometerReading", "notes");
     }
 
     @Test
@@ -114,7 +119,7 @@ public class FleetTruckTest {
 
 
         assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(() -> fleetTruck.returnFromInspection(100))
+                .isThrownBy(() -> fleetTruck.returnFromInspection("some-notes", 100))
                 .withMessage("Truck is not currently in inspection");
     }
 
@@ -125,7 +130,7 @@ public class FleetTruckTest {
 
 
         assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> fleetTruck.returnFromInspection(0))
+                .isThrownBy(() -> fleetTruck.returnFromInspection("some-notes", 0))
                 .withMessage("Odometer reading cannot be less than previous reading");
     }
 

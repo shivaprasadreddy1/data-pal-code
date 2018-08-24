@@ -24,20 +24,15 @@ public class FleetServiceTest {
 
     @Mock
     private FleetTruckRepository mockFleetTruckRepository;
-    @Mock
-    private TruckInspectionRepository mockTruckInspectionRepository;
     @Captor
     private ArgumentCaptor<FleetTruck> truckCaptor;
-    @Captor
-    private ArgumentCaptor<TruckInspection> truckInspectionCaptor;
 
     private FleetService fleetService;
 
     @Before
     public void setUp() {
         fleetService = new FleetService(
-                mockFleetTruckRepository,
-                mockTruckInspectionRepository
+                mockFleetTruckRepository
         );
     }
 
@@ -80,28 +75,16 @@ public class FleetServiceTest {
     @Test
     public void returnFromInspection() {
         FleetTruck mockFleetTruck = mock(FleetTruck.class);
-        when(mockFleetTruck.getStatus()).thenReturn(FleetTruckStatus.IN_INSPECTION);
         when(mockFleetTruckRepository.findOne(any())).thenReturn(mockFleetTruck);
-        Vin vin = Vin.of("some-vin");
-        String notes = "some-notes";
-        int odometerReading = 2;
 
 
-        fleetService.returnFromInspection(vin, notes, odometerReading);
+        fleetService.returnFromInspection(Vin.of("some-vin"), "some-notes", 2);
 
 
-        InOrder inOrder = inOrder(mockFleetTruck, mockFleetTruckRepository, mockTruckInspectionRepository);
-        inOrder.verify(mockFleetTruckRepository).findOne(vin);
-        inOrder.verify(mockFleetTruck).returnFromInspection(odometerReading);
+        InOrder inOrder = inOrder(mockFleetTruck, mockFleetTruckRepository);
+        inOrder.verify(mockFleetTruckRepository).findOne(Vin.of("some-vin"));
+        inOrder.verify(mockFleetTruck).returnFromInspection("some-notes", 2);
         inOrder.verify(mockFleetTruckRepository).save(mockFleetTruck);
-        inOrder.verify(mockTruckInspectionRepository).save(truckInspectionCaptor.capture());
-
-        TruckInspection createdEntry = truckInspectionCaptor.getValue();
-        assertThat(createdEntry.getTruckVin()).isEqualTo(vin);
-        assertThat(createdEntry.getOdometerReading()).isEqualTo(odometerReading);
-        assertThat(createdEntry.getNotes()).isEqualTo(notes);
-
-        verifyNoMoreInteractions(mockFleetTruck);
     }
 
     @Test

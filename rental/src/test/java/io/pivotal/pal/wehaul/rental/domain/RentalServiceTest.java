@@ -10,9 +10,9 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,11 +28,7 @@ public class RentalServiceTest {
     @Mock
     private TruckSizeChart mockTruckSizeChart;
     @Mock
-    private RentalRepository mockRentalRepository;
-    @Mock
     private RentalTruckRepository mockRentalTruckRepository;
-    @Captor
-    private ArgumentCaptor<Rental> rentalCaptor;
     @Captor
     private ArgumentCaptor<RentalTruck> truckCaptor;
 
@@ -40,7 +36,7 @@ public class RentalServiceTest {
 
     @Before
     public void setUp() {
-        rentalService = new RentalService(mockTruckAllocationService, mockRentalRepository, mockRentalTruckRepository, mockTruckSizeChart);
+        rentalService = new RentalService(mockTruckAllocationService, mockRentalTruckRepository, mockTruckSizeChart);
     }
 
     @Test
@@ -60,110 +56,53 @@ public class RentalServiceTest {
 
     @Test
     public void create() {
-        List<RentalTruck> rentalTrucks = Arrays.asList(mock(RentalTruck.class), mock(RentalTruck.class));
-        when(mockRentalTruckRepository.findAllByTruckSizeAndStatus(any(), any())).thenReturn(rentalTrucks);
-
         RentalTruck mockRentalTruck = mock(RentalTruck.class);
-        when(mockRentalTruck.getVin()).thenReturn(Vin.of("some-vin"));
-        String customerName = "some-customer-name";
         when(mockTruckAllocationService.allocateTruck(any(TruckSize.class))).thenReturn(mockRentalTruck);
 
 
-        rentalService.create(customerName, TruckSize.LARGE);
+        rentalService.create("some-customer-name", TruckSize.LARGE);
 
 
-        InOrder inOrder = inOrder(mockRentalTruck, mockTruckAllocationService, mockRentalTruckRepository, mockRentalRepository);
+        InOrder inOrder = inOrder(mockTruckAllocationService, mockRentalTruck, mockRentalTruckRepository);
         inOrder.verify(mockTruckAllocationService).allocateTruck(TruckSize.LARGE);
-        inOrder.verify(mockRentalTruck).reserve();
-        inOrder.verify(mockRentalTruckRepository).save(truckCaptor.capture());
-        inOrder.verify(mockRentalRepository).save(rentalCaptor.capture());
-
-        RentalTruck savedRentalTruck = truckCaptor.getValue();
-        assertThat(savedRentalTruck).isSameAs(mockRentalTruck);
-
-        Rental savedRental = rentalCaptor.getValue();
-        assertThat(savedRental.getCustomerName()).isEqualTo(customerName);
-        assertThat(savedRental.getTruckVin()).isEqualTo(Vin.of("some-vin"));
+        inOrder.verify(mockRentalTruck).reserve("some-customer-name");
+        inOrder.verify(mockRentalTruckRepository).save(mockRentalTruck);
     }
 
     @Test
     public void pickUp() {
         RentalTruck mockRentalTruck = mock(RentalTruck.class);
         when(mockRentalTruck.getStatus()).thenReturn(RentalTruckStatus.RESERVED);
-        when(mockRentalTruckRepository.findOne(any())).thenReturn(mockRentalTruck);
-
-        Rental mockRental = mock(Rental.class);
-        when(mockRental.getTruckVin()).thenReturn(Vin.of("some-vin"));
-        when(mockRental.getDistanceTraveled()).thenReturn(null);
-        when(mockRentalRepository.findOne(any())).thenReturn(mockRental);
-
-        ConfirmationNumber confirmationNumber = mockRental.getConfirmationNumber();
+        when(mockRentalTruckRepository.findOneByRentalConfirmationNumber(any())).thenReturn(mockRentalTruck);
+        ConfirmationNumber confirmationNumber = ConfirmationNumber.of("00000000-0000-0000-0000-000000000000");
 
 
         rentalService.pickUp(confirmationNumber);
 
 
-        InOrder inOrder = inOrder(mockRental, mockRentalRepository, mockRentalTruck, mockRentalTruckRepository);
-        inOrder.verify(mockRentalRepository).findOne(confirmationNumber);
-        inOrder.verify(mockRental).pickUp();
-        inOrder.verify(mockRentalRepository).save(mockRental);
-
-        inOrder.verify(mockRentalTruckRepository).findOne(Vin.of("some-vin"));
+        InOrder inOrder = inOrder(mockRentalTruckRepository, mockRentalTruck);
+        inOrder.verify(mockRentalTruckRepository).findOneByRentalConfirmationNumber(UUID.fromString("00000000-0000-0000-0000-000000000000"));
         inOrder.verify(mockRentalTruck).pickUp();
         inOrder.verify(mockRentalTruckRepository).save(mockRentalTruck);
-
-        verify(mockRental).getConfirmationNumber();
-        verify(mockRental).getTruckVin();
-        verifyNoMoreInteractions(mockRental, mockRentalTruck);
     }
 
     @Test
     public void dropOff() {
-        Rental mockRental = mock(Rental.class);
-        when(mockRentalRepository.findOne(any())).thenReturn(mockRental);
-
         RentalTruck mockRentalTruck = mock(RentalTruck.class);
         when(mockRentalTruck.getStatus()).thenReturn(RentalTruckStatus.RENTED);
-        when(mockRentalTruckRepository.findOne(any())).thenReturn(mockRentalTruck);
+        when(mockRentalTruckRepository.findOneByRentalConfirmationNumber(any())).thenReturn(mockRentalTruck);
 
-        ConfirmationNumber confirmationNumber = ConfirmationNumber.newId();
+        ConfirmationNumber confirmationNumber = ConfirmationNumber.of("00000000-0000-0000-0000-000000000000");
         int distanceTraveled = 500;
 
 
         rentalService.dropOff(confirmationNumber, distanceTraveled);
 
 
-        InOrder inOrder = inOrder(mockRental, mockRentalRepository, mockRentalTruck, mockRentalTruckRepository);
-        inOrder.verify(mockRentalRepository).findOne(confirmationNumber);
-        inOrder.verify(mockRental).dropOff(distanceTraveled);
-        inOrder.verify(mockRentalRepository).save(rentalCaptor.capture());
-        Rental savedRental = rentalCaptor.getValue();
-        assertThat(savedRental).isSameAs(mockRental);
-
-        inOrder.verify(mockRentalTruckRepository).findOne(any());
-        inOrder.verify(mockRentalTruck).dropOff();
-        inOrder.verify(mockRentalTruckRepository).save(truckCaptor.capture());
-        RentalTruck savedRentalTruck = truckCaptor.getValue();
-        assertThat(savedRentalTruck).isSameAs(mockRentalTruck);
-
-        verify(mockRental).getTruckVin();
-        verifyNoMoreInteractions(mockRental, mockRentalTruck);
-    }
-
-    @Test
-    public void findAll() {
-        Rental mockRental1 = mock(Rental.class);
-        Rental mockRental2 = mock(Rental.class);
-        List<Rental> toBeReturned = asList(mockRental1, mockRental2);
-        when(mockRentalRepository.findAll()).thenReturn(toBeReturned);
-
-
-        Collection<Rental> rentals = rentalService.findAll();
-
-
-        verify(mockRentalRepository).findAll();
-
-        Assertions.assertThat(rentals).hasSameElementsAs(toBeReturned);
+        InOrder inOrder = inOrder(mockRentalTruckRepository, mockRentalTruck);
+        inOrder.verify(mockRentalTruckRepository).findOneByRentalConfirmationNumber(UUID.fromString("00000000-0000-0000-0000-000000000000"));
+        inOrder.verify(mockRentalTruck).dropOff(distanceTraveled);
+        inOrder.verify(mockRentalTruckRepository).save(mockRentalTruck);
     }
 
     @Test
@@ -195,6 +134,22 @@ public class RentalServiceTest {
     }
 
     @Test
+    public void findAll() {
+        RentalTruck mockRental1 = mock(RentalTruck.class);
+        RentalTruck mockRental2 = mock(RentalTruck.class);
+        List<RentalTruck> toBeReturned = asList(mockRental1, mockRental2);
+        when(mockRentalTruckRepository.findAll()).thenReturn(toBeReturned);
+
+
+        Collection<RentalTruck> rentals = rentalService.findAll();
+
+
+        verify(mockRentalTruckRepository).findAll();
+
+        Assertions.assertThat(rentals).hasSameElementsAs(toBeReturned);
+    }
+
+    @Test
     public void allowRenting_whenTruckNotFound() {
         when(mockRentalTruckRepository.findOne(any())).thenReturn(null);
 
@@ -216,8 +171,8 @@ public class RentalServiceTest {
 
     @Test
     public void pickUp_whenNoRentalFound() {
-        when(mockRentalRepository.findOne(any())).thenReturn(null);
-        ConfirmationNumber confirmationNumber = ConfirmationNumber.newId();
+        when(mockRentalTruckRepository.findOne(any())).thenReturn(null);
+        ConfirmationNumber confirmationNumber = ConfirmationNumber.of("00000000-0000-0000-0000-000000000000");
 
 
         assertThatExceptionOfType(IllegalArgumentException.class)
@@ -225,14 +180,13 @@ public class RentalServiceTest {
                 .withMessage(String.format("No rental found for id=%s", confirmationNumber));
 
 
-        verify(mockRentalRepository).findOne(confirmationNumber);
-        verifyNoMoreInteractions(mockRentalRepository);
+        verify(mockRentalTruckRepository).findOneByRentalConfirmationNumber(UUID.fromString("00000000-0000-0000-0000-000000000000"));
     }
 
     @Test
     public void dropOff_whenNoRentalFound() {
-        when(mockRentalRepository.findOne(any())).thenReturn(null);
-        ConfirmationNumber confirmationNumber = ConfirmationNumber.newId();
+        when(mockRentalTruckRepository.findOneByRentalConfirmationNumber(any())).thenReturn(null);
+        ConfirmationNumber confirmationNumber = ConfirmationNumber.of("00000000-0000-0000-0000-000000000000");
         int distanceTraveled = 0;
 
 
@@ -243,8 +197,6 @@ public class RentalServiceTest {
                 .withMessage(String.format("No rental found for id=%s", confirmationNumber));
 
 
-        verify(mockRentalRepository).findOne(confirmationNumber);
-        verifyNoMoreInteractions(mockRentalRepository);
-        verifyZeroInteractions(mockRentalTruckRepository);
+        verify(mockRentalTruckRepository).findOneByRentalConfirmationNumber(UUID.fromString("00000000-0000-0000-0000-000000000000"));
     }
 }

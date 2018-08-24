@@ -26,35 +26,40 @@ public class RentalTruckTest {
         RentalTruck rentalTruck = new RentalTruck(Vin.of("test-0001"), null);
 
 
-        rentalTruck.reserve();
+        rentalTruck.reserve("some-customer-name");
 
 
         assertThat(rentalTruck.getStatus()).isEqualTo(RentalTruckStatus.RESERVED);
+        assertThat(rentalTruck.getRental()).isEqualToComparingOnlyGivenFields(
+                new Rental("some-customer-name", Vin.of("test-0001")),
+                "customerName", "truckVin", "distanceTraveled");
     }
 
     @Test
     public void pickUp() {
         RentalTruck rentalTruck = new RentalTruck(Vin.of("test-0001"), null);
-        rentalTruck.reserve();
+        rentalTruck.reserve("some-customer-name");
 
 
         rentalTruck.pickUp();
 
 
         assertThat(rentalTruck.getStatus()).isEqualTo(RentalTruckStatus.RENTED);
+        assertThat(rentalTruck.getRental().getDistanceTraveled()).isEqualTo(0);
     }
 
     @Test
     public void dropOff() {
         RentalTruck rentalTruck = new RentalTruck(Vin.of("test-0001"), TruckSize.LARGE);
-        rentalTruck.reserve();
+        rentalTruck.reserve("some-customer-name");
         rentalTruck.pickUp();
 
 
-        rentalTruck.dropOff();
+        rentalTruck.dropOff(10);
 
 
         assertThat(rentalTruck.getStatus()).isEqualTo(RentalTruckStatus.RENTABLE);
+        assertThat(rentalTruck.getRental().getDistanceTraveled()).isEqualTo(10);
     }
 
     @Test
@@ -93,7 +98,7 @@ public class RentalTruckTest {
     @Test
     public void preventRenting_whenAnythingButRentable() {
         RentalTruck rentalTruck = new RentalTruck(Vin.of("test-0001"), TruckSize.LARGE);
-        rentalTruck.reserve();
+        rentalTruck.reserve("some-customer-name");
 
 
         assertThatExceptionOfType(IllegalStateException.class)
@@ -110,7 +115,7 @@ public class RentalTruckTest {
 
 
         assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(() -> rentalTruck.reserve())
+                .isThrownBy(() -> rentalTruck.reserve("some-customer-name"))
                 .withMessage("Truck cannot be reserved");
     }
 
@@ -130,7 +135,7 @@ public class RentalTruckTest {
 
 
         assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(() -> rentalTruck.dropOff())
+                .isThrownBy(() -> rentalTruck.dropOff(0))
                 .withMessage("Truck is not currently rented");
     }
 }

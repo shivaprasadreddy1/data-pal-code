@@ -4,15 +4,13 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.pivotal.pal.wehaul.fleet.domain.FleetService;
 import io.pivotal.pal.wehaul.fleet.domain.Vin;
-import io.pivotal.pal.wehaul.rental.domain.ConfirmationNumber;
-import io.pivotal.pal.wehaul.rental.domain.Rental;
-import io.pivotal.pal.wehaul.rental.domain.RentalService;
-import io.pivotal.pal.wehaul.rental.domain.TruckSize;
+import io.pivotal.pal.wehaul.rental.domain.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @RequestMapping("/rentals")
@@ -32,10 +30,10 @@ public class RentalController {
 
         String customerName = createRentalDto.getCustomerName();
         String truckSize = createRentalDto.getTruckSize();
-        Rental rental = rentalService.create(customerName, TruckSize.valueOf(truckSize));
+        RentalTruck rentalTruck = rentalService.create(customerName, TruckSize.valueOf(truckSize));
 
         io.pivotal.pal.wehaul.fleet.domain.Vin fleetVin =
-                io.pivotal.pal.wehaul.fleet.domain.Vin.of(rental.getTruckVin().getVin());
+                io.pivotal.pal.wehaul.fleet.domain.Vin.of(rentalTruck.getVin().getVin());
         fleetService.removeFromYard(fleetVin);
 
         return ResponseEntity.ok().build();
@@ -53,10 +51,10 @@ public class RentalController {
                                               @RequestBody DropOffRentalDto dropOffRentalDto) {
 
         int distanceTraveled = dropOffRentalDto.getDistanceTraveled();
-        Rental rental = rentalService.dropOff(ConfirmationNumber.of(confirmationNumber), distanceTraveled);
+        RentalTruck rentalTruck = rentalService.dropOff(ConfirmationNumber.of(confirmationNumber), distanceTraveled);
 
         io.pivotal.pal.wehaul.fleet.domain.Vin fleetVin =
-                io.pivotal.pal.wehaul.fleet.domain.Vin.of(rental.getTruckVin().getVin());
+                io.pivotal.pal.wehaul.fleet.domain.Vin.of(rentalTruck.getVin().getVin());
         fleetService.returnToYard(fleetVin, dropOffRentalDto.getDistanceTraveled());
 
         return ResponseEntity.ok().build();
@@ -64,11 +62,12 @@ public class RentalController {
 
     @GetMapping
     public ResponseEntity<List<RentalDto>> getAllRentals() {
-        Collection<Rental> rentals = rentalService.findAll();
 
-        List<RentalDto> rentalDtos = rentals.stream()
-                .map(truck -> mapRentalToDto(truck))
-                .collect(Collectors.toList());
+        List<RentalDto> rentalDtos = rentalService.findAll().stream()
+            .map(RentalTruck::getRental)
+            .map(rental -> mapRentalToDto(rental))
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
 
         return ResponseEntity.ok(rentalDtos);
     }

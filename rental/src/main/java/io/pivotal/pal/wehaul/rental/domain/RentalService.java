@@ -12,12 +12,22 @@ public class RentalService {
     private final RentalTruckRepository rentalTruckRepository;
     private final TruckSizeChart truckSizeChart;
 
+    @Deprecated
     public RentalService(TruckAllocationService truckAllocationService,
                          RentalRepository rentalRepository,
                          RentalTruckRepository rentalTruckRepository,
                          TruckSizeChart truckSizeChart) {
         this.truckAllocationService = truckAllocationService;
         this.rentalRepository = rentalRepository;
+        this.rentalTruckRepository = rentalTruckRepository;
+        this.truckSizeChart = truckSizeChart;
+    }
+
+    public RentalService(TruckAllocationService truckAllocationService,
+                         RentalTruckRepository rentalTruckRepository,
+                         TruckSizeChart truckSizeChart) {
+        this.truckAllocationService = truckAllocationService;
+        this.rentalRepository = null;
         this.rentalTruckRepository = rentalTruckRepository;
         this.truckSizeChart = truckSizeChart;
     }
@@ -29,17 +39,17 @@ public class RentalService {
     }
 
     @Transactional
-    public Rental create(String customerName, TruckSize truckSize) {
+    public RentalTruck create(String customerName, TruckSize truckSize) {
 
         RentalTruck rentalTruck = truckAllocationService.allocateTruck(truckSize);
 
-        rentalTruck.reserve();
+        rentalTruck.reserve(null);
         rentalTruckRepository.save(rentalTruck);
 
         Rental rental = new Rental(customerName, rentalTruck.getVin());
         rentalRepository.save(rental);
 
-        return rental;
+        return null;
     }
 
     @Transactional
@@ -58,7 +68,7 @@ public class RentalService {
     }
 
     @Transactional
-    public Rental dropOff(ConfirmationNumber confirmationNumber, int distanceTraveled) {
+    public RentalTruck dropOff(ConfirmationNumber confirmationNumber, int distanceTraveled) {
         Rental rental = rentalRepository.findOne(confirmationNumber);
         if (rental == null) {
             throw new IllegalArgumentException(String.format("No rental found for id=%s", confirmationNumber));
@@ -69,35 +79,37 @@ public class RentalService {
 
         Vin vin = rental.getTruckVin();
         RentalTruck rentalTruck = rentalTruckRepository.findOne(vin);
-        rentalTruck.dropOff();
+        rentalTruck.dropOff(-1);
         rentalTruckRepository.save(rentalTruck);
 
-        return rental;
-    }
-
-    public Collection<Rental> findAll() {
-
-        return StreamSupport.stream(rentalRepository.findAll().spliterator(), false)
-                .collect(Collectors.toList());
+        return null;
     }
 
     public void preventRenting(Vin vin) {
-        RentalTruck truck = rentalTruckRepository.findOne(vin);
-        if (truck == null) {
+        RentalTruck rentalTruck = rentalTruckRepository.findOne(vin);
+        if (rentalTruck == null) {
             throw new IllegalArgumentException(String.format("No truck found with vin=%s", vin));
         }
 
-        truck.preventRenting();
-        rentalTruckRepository.save(truck);
+        rentalTruck.preventRenting();
+
+        rentalTruckRepository.save(rentalTruck);
     }
 
     public void allowRenting(Vin vin) {
-        RentalTruck truck = rentalTruckRepository.findOne(vin);
-        if (truck == null) {
+        RentalTruck rentalTruck = rentalTruckRepository.findOne(vin);
+        if (rentalTruck == null) {
             throw new IllegalArgumentException(String.format("No truck found with vin=%s", vin));
         }
 
-        truck.allowRenting();
-        rentalTruckRepository.save(truck);
+        rentalTruck.allowRenting();
+
+        rentalTruckRepository.save(rentalTruck);
+    }
+
+    public Collection<RentalTruck> findAll() {
+        return StreamSupport
+                .stream(rentalTruckRepository.findAll().spliterator(), false)
+                .collect(Collectors.toList());
     }
 }
