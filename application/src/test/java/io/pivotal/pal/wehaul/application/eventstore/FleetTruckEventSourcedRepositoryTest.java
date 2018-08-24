@@ -156,32 +156,4 @@ public class FleetTruckEventSourcedRepositoryTest {
 
         assertThat(found).isNull();
     }
-
-    @Test
-    public void findAll() throws JsonProcessingException {
-        FleetTruckPurchased event1 = new FleetTruckPurchased("vin-1", FleetTruckStatus.INSPECTABLE.toString(), 0, 5);
-        FleetTruckPurchased event2 = new FleetTruckPurchased("vin-2", FleetTruckStatus.INSPECTABLE.toString(), 0, 100);
-        FleetTruckSentForInspection event3 = new FleetTruckSentForInspection("vin-2", FleetTruckStatus.IN_INSPECTION.toString());
-
-        when(mockEventStoreRepository.findAll(any(Sort.class)))
-                .thenReturn(asList(
-                        new FleetTruckEventStoreEntity(new FleetTruckEventStoreEntityKey("vin-1", 0), FleetTruckPurchased.class, objectMapper.writeValueAsString(event1)),
-                        new FleetTruckEventStoreEntity(new FleetTruckEventStoreEntityKey("vin-2", 0), FleetTruckPurchased.class, objectMapper.writeValueAsString(event2)),
-                        new FleetTruckEventStoreEntity(new FleetTruckEventStoreEntityKey("vin-2", 1), FleetTruckSentForInspection.class, objectMapper.writeValueAsString(event3))
-                ));
-
-
-        List<FleetTruck> trucks = fleetTruckRepository.findAll();
-
-
-        assertThat(trucks).hasSize(2);
-
-        assertThat(trucks.get(0).getVin()).isEqualTo(Vin.of("vin-1"));
-        assertThat(trucks.get(0).getStatus()).isEqualTo(FleetTruckStatus.INSPECTABLE);
-        assertThat(trucks.get(0).getOdometerReading()).isEqualTo(5);
-
-        assertThat(trucks.get(1).getVin()).isEqualTo(Vin.of("vin-2"));
-        assertThat(trucks.get(1).getStatus()).isEqualTo(FleetTruckStatus.IN_INSPECTION);
-        assertThat(trucks.get(1).getOdometerReading()).isEqualTo(100);
-    }
 }

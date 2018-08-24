@@ -1,6 +1,6 @@
 package io.pivotal.pal.wehaul.application;
 
-import io.pivotal.pal.wehaul.fleet.domain.FleetService;
+import io.pivotal.pal.wehaul.fleet.domain.FleetCommandService;
 import io.pivotal.pal.wehaul.fleet.domain.Vin;
 import io.pivotal.pal.wehaul.rental.domain.event.RentalTruckDroppedOff;
 import io.pivotal.pal.wehaul.rental.domain.event.RentalTruckReserved;
@@ -12,19 +12,19 @@ import org.springframework.stereotype.Component;
 @Async
 public class RentalEventListener {
 
-    private final FleetService fleetService;
+    private final FleetCommandService fleetCommandService;
 
-    public RentalEventListener(FleetService fleetService) {
-        this.fleetService = fleetService;
+    public RentalEventListener(FleetCommandService fleetCommandService) {
+        this.fleetCommandService = fleetCommandService;
     }
 
     @EventListener
     public void onRentalTruckReserved(RentalTruckReserved event) {
-        fleetService.removeFromYard(Vin.of(event.getVin()));
+        fleetCommandService.removeFromYard(Vin.of(event.getVin()));
     }
 
     @EventListener
     public void onRentalTruckDroppedOff(RentalTruckDroppedOff event) {
-        fleetService.returnToYard(Vin.of(event.getVin()), event.getDistanceTraveled());
+        fleetCommandService.returnToYard(Vin.of(event.getVin()), event.getDistanceTraveled());
     }
 }

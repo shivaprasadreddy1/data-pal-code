@@ -7,6 +7,7 @@ import io.pivotal.pal.wehaul.fleet.domain.Vin;
 import io.pivotal.pal.wehaul.fleet.domain.event.FleetTruckEvent;
 import io.pivotal.pal.wehaul.fleet.domain.event.FleetTruckPurchased;
 import io.pivotal.pal.wehaul.fleet.domain.event.FleetTruckSentForInspection;
+import io.pivotal.pal.wehaul.fleet.domain.FleetTruckUpdated;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,6 +46,7 @@ public class EventPublishingFleetTruckRepositoryTest {
         FleetTruckEvent fleetTruckEvent2 = new FleetTruckSentForInspection("vin", FleetTruckStatus.IN_INSPECTION.toString());
         FleetTruck mockFleetTruck = mock(FleetTruck.class);
         when(mockFleetTruck.getVin()).thenReturn(Vin.of("vin"));
+        when(mockFleetTruck.getStatus()).thenReturn(FleetTruckStatus.IN_INSPECTION);
         when(mockFleetTruck.getDirtyEvents())
                 .thenReturn(Arrays.asList(fleetTruckEvent1, fleetTruckEvent2));
 
@@ -63,6 +65,7 @@ public class EventPublishingFleetTruckRepositoryTest {
         FleetTruckEvent fleetTruckEvent2 = new FleetTruckSentForInspection("some-vin", FleetTruckStatus.IN_INSPECTION.toString());
         FleetTruck mockFleetTruck = mock(FleetTruck.class);
         when(mockFleetTruck.getVin()).thenReturn(Vin.of("some-vin"));
+        when(mockFleetTruck.getStatus()).thenReturn(FleetTruckStatus.IN_INSPECTION);
         when(mockFleetTruck.getDirtyEvents())
                 .thenReturn(Arrays.asList(fleetTruckEvent1, fleetTruckEvent2));
 
@@ -76,6 +79,8 @@ public class EventPublishingFleetTruckRepositoryTest {
 
         inOrder.verify(mockApplicationEventPublisher).publishEvent(fleetTruckEvent1);
         inOrder.verify(mockApplicationEventPublisher).publishEvent(fleetTruckEvent2);
+
+        inOrder.verify(mockApplicationEventPublisher).publishEvent(new FleetTruckUpdated(mockFleetTruck));
     }
 
     @Test
@@ -92,19 +97,4 @@ public class EventPublishingFleetTruckRepositoryTest {
         assertThat(fleetTruck).isEqualTo(mockFleetTruckFromDelegate);
     }
 
-    @Test
-    public void findAll_delegatesFindAll() {
-        List<FleetTruck> fleetTrucksFromDelegate =
-                Arrays.asList(mock(FleetTruck.class), mock(FleetTruck.class));
-
-        when(mockFleetTruckRepository.findAll()).thenReturn(fleetTrucksFromDelegate);
-
-
-        List<FleetTruck> fleetTrucks = repository.findAll();
-
-
-        verify(mockFleetTruckRepository).findAll();
-
-        assertThat(fleetTrucks).isEqualTo(fleetTrucksFromDelegate);
-    }
 }

@@ -2,10 +2,7 @@ package io.pivotal.pal.wehaul.application;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.pivotal.pal.wehaul.fleet.domain.FleetService;
-import io.pivotal.pal.wehaul.fleet.domain.FleetTruck;
-import io.pivotal.pal.wehaul.fleet.domain.Vin;
-import io.pivotal.pal.wehaul.rental.domain.RentalService;
+import io.pivotal.pal.wehaul.fleet.domain.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,16 +14,19 @@ import java.util.stream.Collectors;
 @RestController
 public class FleetController {
 
-    private final FleetService fleetService;
+    private final FleetCommandService fleetCommandService;
+    private final FleetQueryService fleetQueryService;
 
-    public FleetController(FleetService fleetService) {
-        this.fleetService = fleetService;
+    public FleetController(FleetCommandService fleetCommandService,
+                           FleetQueryService fleetQueryService) {
+        this.fleetCommandService = fleetCommandService;
+        this.fleetQueryService = fleetQueryService;
     }
 
     @PostMapping
     public ResponseEntity<Void> buyTruck(@RequestBody BuyTruckDto buyTruckDto) {
 
-        fleetService.buyTruck(
+        fleetCommandService.buyTruck(
                 Vin.of(buyTruckDto.getVin()),
                 buyTruckDto.getOdometerReading(),
                 buyTruckDto.getTruckLength()
@@ -37,7 +37,7 @@ public class FleetController {
 
     @GetMapping
     public ResponseEntity<Collection<TruckDto>> getAllTrucks() {
-        Collection<FleetTruck> fleetTrucks = fleetService.findAll();
+        Collection<FleetTruck> fleetTrucks = fleetCommandService.findAll();
 
         List<TruckDto> trucksDto = fleetTrucks.stream()
                 .map(truck -> mapTruckToDto(truck))
@@ -49,7 +49,7 @@ public class FleetController {
     @PostMapping("/{vin}/send-for-inspection")
     public ResponseEntity<Void> sendForInspection(@PathVariable String vin) {
 
-        fleetService.sendForInspection(Vin.of(vin));
+        fleetCommandService.sendForInspection(Vin.of(vin));
         return ResponseEntity.ok().build();
     }
 
@@ -62,17 +62,35 @@ public class FleetController {
         String notes = returnFromInspectionDto.getNotes();
         int odometerReading = returnFromInspectionDto.getOdometerReading();
 
-        fleetService.returnFromInspection(Vin.of(vin), notes, odometerReading);
+        fleetCommandService.returnFromInspection(Vin.of(vin), notes, odometerReading);
 
         return ResponseEntity.ok().build();
     }
 
+    private TruckDto mapTruckSnapshotToDto(FleetTruckSnapshot fleetTruckSnapshot) {
+        return new TruckDto(
+                fleetTruckSnapshot.getVin(),
+                fleetTruckSnapshot.getStatus(),
+                fleetTruckSnapshot.getOdometerReading(),
+                fleetTruckSnapshot.getTruckLength(),
+                fleetTruckSnapshot.getLastInspectionOdometerReading()
+        );
+    }
+
     private TruckDto mapTruckToDto(FleetTruck fleetTruck) {
+        Integer lastInspectionOdometerReading = null;
+        if (fleetTruck.getInspections().size() > 0) {
+            lastInspectionOdometerReading = fleetTruck.getInspections()
+                    .get(fleetTruck.getInspections().size() - 1)
+                    .getOdometerReading();
+        }
+
         return new TruckDto(
                 fleetTruck.getVin().getVin(),
-                fleetTruck.getStatus().name(),
+                fleetTruck.getStatus().toString(),
                 fleetTruck.getOdometerReading(),
-                fleetTruck.getTruckLength()
+                fleetTruck.getTruckLength(),
+                lastInspectionOdometerReading
         );
     }
 
@@ -151,12 +169,14 @@ public class FleetController {
         private final String status;
         private final Integer odometerReading;
         private final Integer truckLength;
+        private final Integer lastInspectionOdometerReading;
 
-        TruckDto(String vin, String status, Integer odometerReading, Integer truckLength) {
+        TruckDto(String vin, String status, Integer odometerReading, Integer truckLength, Integer lastInspectionOdometerReading) {
             this.vin = vin;
             this.status = status;
             this.odometerReading = odometerReading;
             this.truckLength = truckLength;
+            this.lastInspectionOdometerReading = lastInspectionOdometerReading;
         }
 
         public String getVin() {
@@ -175,6 +195,10 @@ public class FleetController {
             return truckLength;
         }
 
+        public Integer getLastInspectionOdometerReading() {
+            return lastInspectionOdometerReading;
+        }
+
         @Override
         public String toString() {
             return "TruckDto{" +
@@ -182,6 +206,7 @@ public class FleetController {
                     ", status='" + status + '\'' +
                     ", odometerReading=" + odometerReading +
                     ", truckLength=" + truckLength +
+                    ", lastInspectionOdometerReading=" + lastInspectionOdometerReading +
                     '}';
         }
     }

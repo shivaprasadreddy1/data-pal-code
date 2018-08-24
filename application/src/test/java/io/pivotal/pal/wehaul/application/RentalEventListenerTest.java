@@ -1,6 +1,6 @@
 package io.pivotal.pal.wehaul.application;
 
-import io.pivotal.pal.wehaul.fleet.domain.FleetService;
+import io.pivotal.pal.wehaul.fleet.domain.FleetCommandService;
 import io.pivotal.pal.wehaul.rental.domain.RentalTruck;
 import io.pivotal.pal.wehaul.rental.domain.event.RentalTruckDroppedOff;
 import io.pivotal.pal.wehaul.rental.domain.event.RentalTruckReserved;
@@ -22,7 +22,7 @@ public class RentalEventListenerTest {
     private ApplicationEventPublisher applicationEventPublisher;
 
     @MockBean
-    private FleetService mockFleetService;
+    private FleetCommandService mockFleetCommandService;
 
     @Test
     public void onRentalTruckReserved() {
@@ -34,7 +34,7 @@ public class RentalEventListenerTest {
         applicationEventPublisher.publishEvent(new RentalTruckReserved(vin));
 
 
-        verify(mockFleetService, timeout(100)).removeFromYard(io.pivotal.pal.wehaul.fleet.domain.Vin.of(vin));
+        verify(mockFleetCommandService, timeout(100)).removeFromYard(io.pivotal.pal.wehaul.fleet.domain.Vin.of(vin));
     }
 
     @Test
@@ -47,6 +47,6 @@ public class RentalEventListenerTest {
         applicationEventPublisher.publishEvent(new RentalTruckDroppedOff(vin, 100));
 
 
-        verify(mockFleetService, timeout(100)).returnToYard(io.pivotal.pal.wehaul.fleet.domain.Vin.of(vin), 100);
+        verify(mockFleetCommandService, timeout(100)).returnToYard(io.pivotal.pal.wehaul.fleet.domain.Vin.of(vin), 100);
     }
 }

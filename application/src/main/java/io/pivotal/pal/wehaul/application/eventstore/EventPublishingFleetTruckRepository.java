@@ -4,6 +4,7 @@ import io.pivotal.pal.wehaul.fleet.domain.FleetTruck;
 import io.pivotal.pal.wehaul.fleet.domain.FleetTruckRepository;
 import io.pivotal.pal.wehaul.fleet.domain.Vin;
 import io.pivotal.pal.wehaul.fleet.domain.event.FleetTruckEvent;
+import io.pivotal.pal.wehaul.fleet.domain.FleetTruckUpdated;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;

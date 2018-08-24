@@ -2,11 +2,11 @@ package io.pivotal.pal.wehaul.fleet.domain;
 
 import java.util.Collection;
 
-public class FleetService {
+public class FleetCommandService {
 
     private final FleetTruckRepository fleetTruckRepository;
 
-    public FleetService(FleetTruckRepository fleetTruckRepository) {
+    public FleetCommandService(FleetTruckRepository fleetTruckRepository) {
         this.fleetTruckRepository = fleetTruckRepository;
     }
 

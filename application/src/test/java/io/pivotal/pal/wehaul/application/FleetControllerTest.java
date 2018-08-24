@@ -1,9 +1,7 @@
 package io.pivotal.pal.wehaul.application;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.pivotal.pal.wehaul.fleet.domain.FleetService;
-import io.pivotal.pal.wehaul.fleet.domain.FleetTruck;
-import io.pivotal.pal.wehaul.fleet.domain.Vin;
+import io.pivotal.pal.wehaul.fleet.domain.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,13 +27,15 @@ public class FleetControllerTest {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Mock
-    private FleetService mockFleetService;
+    private FleetCommandService mockFleetCommandService;
+    @Mock
+    private FleetQueryService mockFleetQueryService;
 
     private MockMvc mockMvc;
 
     @Before
     public void setUp() {
-        FleetController fleetController = new FleetController(mockFleetService);
+        FleetController fleetController = new FleetController(mockFleetCommandService, mockFleetQueryService);
         mockMvc = MockMvcBuilders.standaloneSetup(fleetController).build();
     }
 
@@ -58,18 +58,18 @@ public class FleetControllerTest {
                 .andExpect(status().isOk());
 
 
-        verify(mockFleetService).buyTruck(Vin.of("some-vin"), 1000, 25);
+        verify(mockFleetCommandService).buyTruck(Vin.of("some-vin"), 1000, 25);
     }
 
     @Test
     public void getAllTrucks() throws Exception {
-        FleetTruck fleetTruck1 = new FleetTruck(Vin.of("some-vin-1"), 1000, 25);
-        FleetTruck fleetTruck2 = new FleetTruck(Vin.of("some-vin-2"), 2000, 15);
-        List<FleetTruck> fleetTrucks = Arrays.asList(fleetTruck1, fleetTruck2);
-        when(mockFleetService.findAll()).thenReturn(fleetTrucks);
+        FleetTruckSnapshot fleetTruckSnapshot1 = new FleetTruckSnapshot("some-vin-1", FleetTruckStatus.INSPECTABLE.toString(), 1000, 25, 500);
+        FleetTruckSnapshot fleetTruckSnapshot2 = new FleetTruckSnapshot("some-vin-2", FleetTruckStatus.INSPECTABLE.toString(), 2000, 15, null);
+        List<FleetTruckSnapshot> fleetTruckSnapshots = Arrays.asList(fleetTruckSnapshot1, fleetTruckSnapshot2);
+        when(mockFleetQueryService.findAll()).thenReturn(fleetTruckSnapshots);
 
-        FleetController.TruckDto truckDto1 = new FleetController.TruckDto("some-vin-1", "INSPECTABLE", 1000, 25);
-        FleetController.TruckDto truckDto2 = new FleetController.TruckDto("some-vin-2", "INSPECTABLE", 2000, 15);
+        FleetController.TruckDto truckDto1 = new FleetController.TruckDto("some-vin-1", "INSPECTABLE", 1000, 25, 500);
+        FleetController.TruckDto truckDto2 = new FleetController.TruckDto("some-vin-2", "INSPECTABLE", 2000, 15, null);
         List<FleetController.TruckDto> truckDtos = Arrays.asList(truckDto1, truckDto2);
         String expectedResponseBody = objectMapper.writeValueAsString(truckDtos);
 
@@ -82,7 +82,7 @@ public class FleetControllerTest {
                 .andExpect(content().json(expectedResponseBody));
 
 
-        verify(mockFleetService).findAll();
+        verify(mockFleetQueryService).findAll();
     }
 
     @Test
@@ -94,8 +94,8 @@ public class FleetControllerTest {
                 .andExpect(status().isOk());
 
 
-        InOrder inOrder = inOrder(mockFleetService);
-        inOrder.verify(mockFleetService).sendForInspection(Vin.of("some-vin"));
+        InOrder inOrder = inOrder(mockFleetCommandService);
+        inOrder.verify(mockFleetCommandService).sendForInspection(Vin.of("some-vin"));
     }
 
     @Test
@@ -114,6 +114,6 @@ public class FleetControllerTest {
                 .andExpect(status().isOk());
 
 
-        verify(mockFleetService).returnFromInspection(Vin.of("some-vin"), "some-notes", 2000);
+        verify(mockFleetCommandService).returnFromInspection(Vin.of("some-vin"), "some-notes", 2000);
     }
 }

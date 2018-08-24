@@ -3,9 +3,14 @@ package io.pivotal.pal.wehaul.application;
 import io.pivotal.pal.wehaul.application.eventstore.EventPublishingFleetTruckRepository;
 import io.pivotal.pal.wehaul.application.eventstore.FleetTruckEventSourcedRepository;
 import io.pivotal.pal.wehaul.application.eventstore.FleetTruckEventStoreRepository;
-import io.pivotal.pal.wehaul.fleet.domain.FleetService;
+import io.pivotal.pal.wehaul.fleet.domain.FleetCommandService;
+import io.pivotal.pal.wehaul.fleet.domain.FleetQueryService;
 import io.pivotal.pal.wehaul.fleet.domain.FleetTruckRepository;
-import io.pivotal.pal.wehaul.rental.domain.*;
+import io.pivotal.pal.wehaul.fleet.domain.FleetTruckSnapshotRepository;
+import io.pivotal.pal.wehaul.rental.domain.RentalService;
+import io.pivotal.pal.wehaul.rental.domain.RentalTruckRepository;
+import io.pivotal.pal.wehaul.rental.domain.TruckAllocationService;
+import io.pivotal.pal.wehaul.rental.domain.TruckSizeChart;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,8 +29,13 @@ public class AppConfig {
     }
 
     @Bean
-    public FleetService fleetService(FleetTruckRepository fleetTruckRepository) {
-        return new FleetService(fleetTruckRepository);
+    public FleetCommandService fleetCommandService(FleetTruckRepository fleetTruckRepository) {
+        return new FleetCommandService(fleetTruckRepository);
+    }
+
+    @Bean
+    public FleetQueryService fleetQueryService(FleetTruckSnapshotRepository fleetTruckSnapshotRepository) {
+        return new FleetQueryService(fleetTruckSnapshotRepository);
     }
 
     @Bean
