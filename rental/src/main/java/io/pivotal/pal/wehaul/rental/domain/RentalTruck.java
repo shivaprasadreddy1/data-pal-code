@@ -1,10 +1,14 @@
 package io.pivotal.pal.wehaul.rental.domain;
 
+import io.pivotal.pal.wehaul.rental.domain.event.RentalTruckDroppedOff;
+import io.pivotal.pal.wehaul.rental.domain.event.RentalTruckReserved;
+import org.springframework.data.domain.AbstractAggregateRoot;
+
 import javax.persistence.*;
 
 @Entity(name = "rentalTruck")
 @Table(name = "rental_truck")
-public class RentalTruck {
+public class RentalTruck extends AbstractAggregateRoot {
 
     @EmbeddedId
     private Vin vin;

@@ -1,12 +1,10 @@
 package io.pivotal.pal.wehaul.application;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.pivotal.pal.wehaul.fleet.domain.FleetService;
 import io.pivotal.pal.wehaul.rental.domain.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.http.MediaType;
@@ -16,7 +14,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -30,14 +27,12 @@ public class RentalControllerTest {
 
     @Mock
     private RentalService mockRentalService;
-    @Mock
-    private FleetService mockFleetService;
 
     private MockMvc mockMvc;
 
     @Before
     public void setUp() {
-        RentalController rentalController = new RentalController(mockRentalService, mockFleetService);
+        RentalController rentalController = new RentalController(mockRentalService);
         mockMvc = MockMvcBuilders.standaloneSetup(rentalController).build();
     }
 
@@ -45,7 +40,6 @@ public class RentalControllerTest {
     public void createRental() throws Exception {
         RentalTruck mockRentalTruck = mock(RentalTruck.class);
         when(mockRentalTruck.getVin()).thenReturn(Vin.of("some-vin"));
-        when(mockRentalService.create(any(), any())).thenReturn(mockRentalTruck);
 
         RentalController.CreateRentalDto requestDto = new RentalController.CreateRentalDto("some-customer-name", "SMALL");
         String requestBody = objectMapper.writeValueAsString(requestDto);
@@ -60,11 +54,7 @@ public class RentalControllerTest {
                 .andExpect(status().isOk());
 
 
-        InOrder inOrder = inOrder(mockRentalService, mockFleetService);
-        inOrder.verify(mockRentalService).create("some-customer-name", TruckSize.SMALL);
-        io.pivotal.pal.wehaul.fleet.domain.Vin fleetVin =
-                io.pivotal.pal.wehaul.fleet.domain.Vin.of("some-vin");
-        inOrder.verify(mockFleetService).removeFromYard(fleetVin);
+        verify(mockRentalService).create("some-customer-name", TruckSize.SMALL);
     }
 
     @Test
@@ -84,7 +74,6 @@ public class RentalControllerTest {
         RentalTruck mockRentalTruck = mock(RentalTruck.class);
         Vin vin = Vin.of("some-vin");
         when(mockRentalTruck.getVin()).thenReturn(vin);
-        when(mockRentalService.dropOff(any(), anyInt())).thenReturn(mockRentalTruck);
 
         RentalController.DropOffRentalDto requestDto = new RentalController.DropOffRentalDto(500);
         String requestBody = objectMapper.writeValueAsString(requestDto);
@@ -99,10 +88,7 @@ public class RentalControllerTest {
                 .andExpect(status().isOk());
 
 
-        InOrder inOrder = inOrder(mockRentalService, mockFleetService);
-        inOrder.verify(mockRentalService).dropOff(ConfirmationNumber.of("00000000-0000-0000-0000-000000000000"), 500);
-        io.pivotal.pal.wehaul.fleet.domain.Vin fleetVin = io.pivotal.pal.wehaul.fleet.domain.Vin.of("some-vin");
-        inOrder.verify(mockFleetService).returnToYard(fleetVin, 500);
+        verify(mockRentalService).dropOff(ConfirmationNumber.of("00000000-0000-0000-0000-000000000000"), 500);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package io.pivotal.pal.wehaul.fleet.domain;
 
+import io.pivotal.pal.wehaul.fleet.domain.event.*;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -20,6 +21,11 @@ public class FleetTruckTest {
         assertThat(fleetTruck.getVin()).isEqualTo(Vin.of("test-0001"));
         assertThat(fleetTruck.getStatus()).isEqualTo(FleetTruckStatus.INSPECTABLE);
         assertThat(fleetTruck.getOdometerReading()).isEqualTo(odometerReading);
+        assertThat(fleetTruck.getTruckLength()).isEqualTo(truckLength);
+
+        assertThat(fleetTruck.getDomainEvents()).hasSize(1);
+        assertThat(fleetTruck.getDomainEvents().get(0))
+                .isEqualToIgnoringGivenFields(new FleetTruckPurchased(vin.getVin(), FleetTruckStatus.INSPECTABLE.toString(), truckLength, odometerReading), "createdDate");
     }
 
     @Test
@@ -31,6 +37,10 @@ public class FleetTruckTest {
 
 
         assertThat(fleetTruck.getStatus()).isEqualTo(FleetTruckStatus.IN_INSPECTION);
+
+        assertThat(fleetTruck.getDomainEvents()).hasSize(2);
+        assertThat(fleetTruck.getDomainEvents().get(1))
+                .isEqualToIgnoringGivenFields(new FleetTruckSentForInspection("test-0001", FleetTruckStatus.IN_INSPECTION.toString()), "createdDate");
     }
 
     @Test
@@ -50,6 +60,10 @@ public class FleetTruckTest {
         assertThat(fleetTruck.getOdometerReading()).isEqualTo(odometerReading);
         assertThat(fleetTruck.getInspections().size()).isEqualTo(1);
         assertThat(fleetTruck.getInspections().get(0)).isEqualToComparingOnlyGivenFields(truckInspection, "truckVin", "odometerReading", "notes");
+
+        assertThat(fleetTruck.getDomainEvents()).hasSize(3);
+        assertThat(fleetTruck.getDomainEvents().get(2))
+                .isEqualToIgnoringGivenFields(new FleetTruckReturnedFromInspection(vin.getVin(), FleetTruckStatus.INSPECTABLE.toString(), odometerReading, notes), "createdDate");
     }
 
     @Test
@@ -61,11 +75,15 @@ public class FleetTruckTest {
 
 
         assertThat(truck.getStatus()).isEqualTo(FleetTruckStatus.NOT_INSPECTABLE);
+
+        assertThat(truck.getDomainEvents()).hasSize(2);
+        assertThat(truck.getDomainEvents().get(1))
+                .isEqualToIgnoringGivenFields(new FleetTruckRemovedFromYard("test-0001", FleetTruckStatus.NOT_INSPECTABLE.toString()), "createdDate");
     }
 
     @Test
     public void returnToYard() {
-        FleetTruck fleetTruck = new FleetTruck(Vin.of("test-0001"), 0, 10);
+        FleetTruck fleetTruck = new FleetTruck(Vin.of("test-0001"), 200, 10);
         fleetTruck.removeFromYard();
         int distanceTraveled = 101;
 
@@ -74,7 +92,11 @@ public class FleetTruckTest {
 
 
         assertThat(fleetTruck.getStatus()).isEqualTo(FleetTruckStatus.INSPECTABLE);
-        assertThat(fleetTruck.getOdometerReading()).isEqualTo(distanceTraveled);
+        assertThat(fleetTruck.getOdometerReading()).isEqualTo(200 + distanceTraveled);
+
+        assertThat(fleetTruck.getDomainEvents()).hasSize(3);
+        assertThat(fleetTruck.getDomainEvents().get(2))
+                .isEqualToIgnoringGivenFields(new FleetTruckReturnedToYard("test-0001", FleetTruckStatus.INSPECTABLE.toString(), 200 + distanceTraveled), "createdDate");
     }
 
     @Test

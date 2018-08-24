@@ -38,7 +38,7 @@ public class FleetServiceTest {
 
     @Test
     public void buyTruck() {
-        FleetTruck fleetTruck = fleetService.buyTruck(Vin.of("some-vin"), 1000, 25);
+        fleetService.buyTruck(Vin.of("some-vin"), 1000, 25);
 
 
         verify(mockFleetTruckRepository).save(truckCaptor.capture());
@@ -48,9 +48,9 @@ public class FleetServiceTest {
         assertThat(savedFleetTruck.getOdometerReading()).isEqualTo(1000);
         assertThat(savedFleetTruck.getTruckLength()).isEqualTo(25);
 
-        assertThat(fleetTruck.getVin()).isEqualTo(Vin.of("some-vin"));
-        assertThat(fleetTruck.getOdometerReading()).isEqualTo(1000);
-        assertThat(fleetTruck.getTruckLength()).isEqualTo(25);
+        assertThat(truckCaptor.getValue().getVin()).isEqualTo(Vin.of("some-vin"));
+        assertThat(truckCaptor.getValue().getOdometerReading()).isEqualTo(1000);
+        assertThat(truckCaptor.getValue().getTruckLength()).isEqualTo(25);
     }
 
     @Test

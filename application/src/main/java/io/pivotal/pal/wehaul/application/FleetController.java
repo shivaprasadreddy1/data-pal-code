@@ -6,6 +6,7 @@ import io.pivotal.pal.wehaul.fleet.domain.FleetService;
 import io.pivotal.pal.wehaul.fleet.domain.FleetTruck;
 import io.pivotal.pal.wehaul.fleet.domain.Vin;
 import io.pivotal.pal.wehaul.rental.domain.RentalService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +21,13 @@ public class FleetController {
     private final FleetService fleetService;
     private final RentalService rentalService;
 
+    public FleetController(FleetService fleetService) {
+        this.fleetService = fleetService;
+        this.rentalService = null;
+    }
+
+    @Deprecated
+    @Autowired
     public FleetController(FleetService fleetService, RentalService rentalService) {
         this.fleetService = fleetService;
         this.rentalService = rentalService;
@@ -28,15 +36,11 @@ public class FleetController {
     @PostMapping
     public ResponseEntity<Void> buyTruck(@RequestBody BuyTruckDto buyTruckDto) {
 
-        FleetTruck fleetTruck = fleetService.buyTruck(
+        fleetService.buyTruck(
                 Vin.of(buyTruckDto.getVin()),
                 buyTruckDto.getOdometerReading(),
                 buyTruckDto.getTruckLength()
         );
-
-        io.pivotal.pal.wehaul.rental.domain.Vin rentalVin =
-                io.pivotal.pal.wehaul.rental.domain.Vin.of(fleetTruck.getVin().getVin());
-        rentalService.addTruck(rentalVin, buyTruckDto.getTruckLength());
 
         return ResponseEntity.ok().build();
     }
@@ -50,15 +54,6 @@ public class FleetController {
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(trucksDto);
-    }
-
-    private TruckDto mapTruckToDto(FleetTruck fleetTruck) {
-        return new TruckDto(
-                fleetTruck.getVin().getVin(),
-                fleetTruck.getStatus().name(),
-                fleetTruck.getOdometerReading(),
-                fleetTruck.getTruckLength()
-        );
     }
 
     @PostMapping("/{vin}/send-for-inspection")
@@ -84,7 +79,17 @@ public class FleetController {
         return ResponseEntity.ok().build();
     }
 
+    private TruckDto mapTruckToDto(FleetTruck fleetTruck) {
+        return new TruckDto(
+                fleetTruck.getVin().getVin(),
+                fleetTruck.getStatus().name(),
+                fleetTruck.getOdometerReading(),
+                fleetTruck.getTruckLength()
+        );
+    }
+
     static class ReturnFromInspectionDto {
+
 
         private final String notes;
         private final int odometerReading;

@@ -12,12 +12,10 @@ public class FleetService {
         this.fleetTruckRepository = fleetTruckRepository;
     }
 
-    public FleetTruck buyTruck(Vin vin, int odometerReading, int truckLength) {
+    public void buyTruck(Vin vin, int odometerReading, int truckLength) {
         FleetTruck fleetTruck = new FleetTruck(vin, odometerReading, truckLength);
 
         fleetTruckRepository.save(fleetTruck);
-
-        return fleetTruck;
     }
 
     public void sendForInspection(Vin vin) {

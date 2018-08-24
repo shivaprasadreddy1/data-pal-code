@@ -1,12 +1,15 @@
 package io.pivotal.pal.wehaul.fleet.domain;
 
+import io.pivotal.pal.wehaul.fleet.domain.event.*;
+import org.springframework.data.domain.AbstractAggregateRoot;
+
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity(name = "fleetTruck")
 @Table(name = "fleet_truck")
-public class FleetTruck {
+public class FleetTruck extends AbstractAggregateRoot {
 
     @EmbeddedId
     private Vin vin;
@@ -38,10 +41,12 @@ public class FleetTruck {
         this.status = FleetTruckStatus.INSPECTABLE;
         this.odometerReading = odometerReading;
         this.truckLength = truckLength;
+
+        this.registerEvent(new FleetTruckPurchased(this.vin.getVin(), this.status.toString(), this.truckLength, this.odometerReading));
     }
 
     public void returnFromInspection(String notes, int odometerReading) {
-        if (status != FleetTruckStatus.IN_INSPECTION) {
+        if (this.status != FleetTruckStatus.IN_INSPECTION) {
             throw new IllegalStateException("Truck is not currently in inspection");
         }
         if (this.odometerReading > odometerReading) {
@@ -56,7 +61,7 @@ public class FleetTruck {
     }
 
     public void sendForInspection() {
-        if (status != FleetTruckStatus.INSPECTABLE) {
+        if (this.status != FleetTruckStatus.INSPECTABLE) {
             throw new IllegalStateException("Truck cannot be inspected");
         }
 
@@ -64,23 +69,23 @@ public class FleetTruck {
     }
 
     public void removeFromYard() {
-        if (status != FleetTruckStatus.INSPECTABLE) {
+        if (this.status != FleetTruckStatus.INSPECTABLE) {
             throw new IllegalStateException("Cannot remove truck, currently in inspection");
         }
 
-        status = FleetTruckStatus.NOT_INSPECTABLE;
+        this.status = FleetTruckStatus.NOT_INSPECTABLE;
     }
 
     public void returnToYard(int distanceTraveled) {
-        if (status != FleetTruckStatus.NOT_INSPECTABLE) {
+        if (this.status != FleetTruckStatus.NOT_INSPECTABLE) {
             throw new IllegalStateException("Truck is not currently out of yard");
         }
         if (distanceTraveled < 0) {
             throw new IllegalArgumentException("Distance traveled cannot be negative");
         }
 
-        status = FleetTruckStatus.INSPECTABLE;
-        this.odometerReading = distanceTraveled;
+        this.status = FleetTruckStatus.INSPECTABLE;
+        this.odometerReading += distanceTraveled;
     }
 
     public Vin getVin() {

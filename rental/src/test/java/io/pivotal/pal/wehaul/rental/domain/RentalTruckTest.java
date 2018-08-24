@@ -1,5 +1,7 @@
 package io.pivotal.pal.wehaul.rental.domain;
 
+import io.pivotal.pal.wehaul.rental.domain.event.RentalTruckDroppedOff;
+import io.pivotal.pal.wehaul.rental.domain.event.RentalTruckReserved;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,6 +35,9 @@ public class RentalTruckTest {
         assertThat(rentalTruck.getRental()).isEqualToComparingOnlyGivenFields(
                 new Rental("some-customer-name", Vin.of("test-0001")),
                 "customerName", "truckVin", "distanceTraveled");
+        assertThat(rentalTruck.getDomainEvents()).hasSize(1);
+        assertThat(rentalTruck.getDomainEvents().get(0))
+                .isEqualToIgnoringGivenFields(new RentalTruckReserved("test-0001"), "createdDate");
     }
 
     @Test
@@ -60,6 +65,9 @@ public class RentalTruckTest {
 
         assertThat(rentalTruck.getStatus()).isEqualTo(RentalTruckStatus.RENTABLE);
         assertThat(rentalTruck.getRental().getDistanceTraveled()).isEqualTo(10);
+        assertThat(rentalTruck.getDomainEvents()).hasSize(2);
+        assertThat(rentalTruck.getDomainEvents().get(1))
+                .isEqualToIgnoringGivenFields(new RentalTruckDroppedOff("test-0001", 10), "createdDate");
     }
 
     @Test

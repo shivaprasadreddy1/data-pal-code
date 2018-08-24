@@ -5,10 +5,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.pivotal.pal.wehaul.fleet.domain.FleetService;
 import io.pivotal.pal.wehaul.fleet.domain.Vin;
 import io.pivotal.pal.wehaul.rental.domain.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -20,6 +20,13 @@ public class RentalController {
     private final RentalService rentalService;
     private final FleetService fleetService;
 
+    public RentalController(RentalService rentalService) {
+        this.rentalService = rentalService;
+        this.fleetService = null;
+    }
+
+    @Deprecated
+    @Autowired
     public RentalController(RentalService rentalService, FleetService fleetService) {
         this.rentalService = rentalService;
         this.fleetService = fleetService;
@@ -31,10 +38,7 @@ public class RentalController {
         String customerName = createRentalDto.getCustomerName();
         String truckSize = createRentalDto.getTruckSize();
         RentalTruck rentalTruck = rentalService.create(customerName, TruckSize.valueOf(truckSize));
-
-        io.pivotal.pal.wehaul.fleet.domain.Vin fleetVin =
-                io.pivotal.pal.wehaul.fleet.domain.Vin.of(rentalTruck.getVin().getVin());
-        fleetService.removeFromYard(fleetVin);
+        fleetService.removeFromYard(Vin.of(rentalTruck.getVin().getVin()));
 
         return ResponseEntity.ok().build();
     }
@@ -52,10 +56,7 @@ public class RentalController {
 
         int distanceTraveled = dropOffRentalDto.getDistanceTraveled();
         RentalTruck rentalTruck = rentalService.dropOff(ConfirmationNumber.of(confirmationNumber), distanceTraveled);
-
-        io.pivotal.pal.wehaul.fleet.domain.Vin fleetVin =
-                io.pivotal.pal.wehaul.fleet.domain.Vin.of(rentalTruck.getVin().getVin());
-        fleetService.returnToYard(fleetVin, dropOffRentalDto.getDistanceTraveled());
+        fleetService.returnToYard(Vin.of(rentalTruck.getVin().getVin()), dropOffRentalDto.getDistanceTraveled());
 
         return ResponseEntity.ok().build();
     }
