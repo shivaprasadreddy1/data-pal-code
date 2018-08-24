@@ -1,25 +1,12 @@
 {
 	"info": {
-		"_postman_id": "5e1913db-acb0-43ba-93da-805e02e13931",
+		"_postman_id": "9c0dfaf9-0ce9-448b-8565-04c4df3c9014",
 		"name": "WeHaul",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
-			"_postman_id": "412dce47-ba87-49c4-ae86-224dbd91e3fb",
 			"name": "List All Trucks",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "cc1a5d5b-56de-4693-b8fc-bfc3c2486a7b",
-						"type": "text/javascript",
-						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 200;"
-						]
-					}
-				}
-			],
 			"request": {
 				"method": "GET",
 				"header": [],
@@ -42,20 +29,7 @@
 			"response": []
 		},
 		{
-			"_postman_id": "b06a0eee-c1b9-4b78-ae35-a0f419e494d8",
 			"name": "Create Rental",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "390d71bc-a272-4a80-a838-78a45709cda2",
-						"type": "text/javascript",
-						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 200;"
-						]
-					}
-				}
-			],
 			"request": {
 				"method": "POST",
 				"header": [
@@ -66,7 +40,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"customerName\": \"some-customer-name\",\n\t\"truckSize\": \"SMALL\"\n}"
+					"raw": "{\n\t\"customerName\": \"some-customer-name\",\n\t\"truckSize\": \"LARGE\"\n}"
 				},
 				"url": {
 					"raw": "localhost:8080/rentals",
@@ -82,26 +56,7 @@
 			"response": []
 		},
 		{
-			"_postman_id": "dbef840f-eeed-4fbf-8306-5de2f5baefa1",
 			"name": "List All Rentals",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "4bc32daa-d3b5-4ffd-ad4e-a326c2ed9444",
-						"type": "text/javascript",
-						"exec": [
-							"var jsonData = JSON.parse(responseBody);",
-							"",
-							"pm.globals.set(\"rentalConfirmationNumber\", jsonData[jsonData.length - 1].confirmationNumber);",
-							"",
-							"tests[\"rentalConfirmationNumber is valid\"] = pm.globals.get(\"rentalConfirmationNumber\") !== null;",
-							"tests[\"Status code is 200\"] = responseCode.code === 200;",
-							""
-						]
-					}
-				}
-			],
 			"request": {
 				"method": "GET",
 				"header": [],
@@ -123,20 +78,7 @@
 			"response": []
 		},
 		{
-			"_postman_id": "2b313093-0eaa-41d0-950b-51571f39b552",
 			"name": "Pick Up Rental",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "d58c34ee-2c35-4424-8a7d-16734cf91aab",
-						"type": "text/javascript",
-						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 200;"
-						]
-					}
-				}
-			],
 			"request": {
 				"method": "POST",
 				"header": [
@@ -150,14 +92,14 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "localhost:8080/rentals/{{rentalConfirmationNumber}}/pick-up",
+					"raw": "localhost:8080/rentals/0f39f880-9328-4b48-99fc-11fc5dc47520/pick-up",
 					"host": [
 						"localhost"
 					],
 					"port": "8080",
 					"path": [
 						"rentals",
-						"{{rentalConfirmationNumber}}",
+						"0f39f880-9328-4b48-99fc-11fc5dc47520",
 						"pick-up"
 					]
 				}
@@ -165,20 +107,7 @@
 			"response": []
 		},
 		{
-			"_postman_id": "c0310900-6f26-4155-89b6-c65ef61d46c3",
 			"name": "Drop Off Rental",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "481b39d9-b98f-4c6b-a11c-8ce2851206a0",
-						"type": "text/javascript",
-						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 200;"
-						]
-					}
-				}
-			],
 			"request": {
 				"method": "POST",
 				"header": [
@@ -192,14 +121,14 @@
 					"raw": "{\n\t\"distanceTraveled\": 200\n}"
 				},
 				"url": {
-					"raw": "localhost:8080/rentals/{{rentalConfirmationNumber}}/drop-off",
+					"raw": "localhost:8080/rentals/0f39f880-9328-4b48-99fc-11fc5dc47520/drop-off",
 					"host": [
 						"localhost"
 					],
 					"port": "8080",
 					"path": [
 						"rentals",
-						"{{rentalConfirmationNumber}}",
+						"0f39f880-9328-4b48-99fc-11fc5dc47520",
 						"drop-off"
 					]
 				}
@@ -207,20 +136,7 @@
 			"response": []
 		},
 		{
-			"_postman_id": "21f77d51-20bb-4a3e-9346-3109493b73e0",
 			"name": "Buy Truck",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "b0fca141-1f2f-4809-a857-2efbbd2db62a",
-						"type": "text/javascript",
-						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 200;"
-						]
-					}
-				}
-			],
 			"request": {
 				"method": "POST",
 				"header": [
@@ -248,20 +164,7 @@
 			"response": []
 		},
 		{
-			"_postman_id": "87525aa0-6d7c-4e87-99b2-684a252d9202",
 			"name": "Send Truck for Inspection",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "3c40e088-f53c-4f44-bb50-dd0160a22f32",
-						"type": "text/javascript",
-						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 200;"
-						]
-					}
-				}
-			],
 			"request": {
 				"method": "POST",
 				"header": [
@@ -291,20 +194,7 @@
 			"response": []
 		},
 		{
-			"_postman_id": "5c3b4bc9-b467-4dd0-8600-8846462e898a",
 			"name": "Return Truck from Inspection",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "62e2549f-31cd-4369-a86b-c4c7d03d4ce2",
-						"type": "text/javascript",
-						"exec": [
-							"tests[\"Status code is 200\"] = responseCode.code === 200;"
-						]
-					}
-				}
-			],
 			"request": {
 				"method": "POST",
 				"header": [

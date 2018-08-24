@@ -1,7 +1,10 @@
 package io.pivotal.pal.wehaul.application;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.pivotal.pal.wehaul.domain.*;
+import io.pivotal.pal.wehaul.domain.FleetService;
+import io.pivotal.pal.wehaul.domain.Truck;
+import io.pivotal.pal.wehaul.domain.TruckSize;
+import io.pivotal.pal.wehaul.domain.Vin;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -58,8 +61,8 @@ public class FleetControllerTest {
 
     @Test
     public void getAllTrucks() throws Exception {
-        Truck truck1 = new Truck(Vin.of("some-vin-1"), TruckStatus.RENTABLE, 1000, TruckSize.LARGE, 25);
-        Truck truck2 = new Truck(Vin.of("some-vin-2"), TruckStatus.RENTABLE,2000, TruckSize.SMALL, 15);
+        Truck truck1 = new Truck(Vin.of("some-vin-1"), 1000, TruckSize.LARGE, 25);
+        Truck truck2 = new Truck(Vin.of("some-vin-2"), 2000, TruckSize.SMALL, 15);
         List<Truck> trucks = Arrays.asList(truck1, truck2);
         when(mockFleetService.findAll()).thenReturn(trucks);
 

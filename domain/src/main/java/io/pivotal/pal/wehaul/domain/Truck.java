@@ -27,20 +27,40 @@ public class Truck {
         // default constructor required by JPA
     }
 
-    public Truck(Vin vin,
-                 TruckStatus status,
-                 Integer odometerReading,
-                 TruckSize truckSize,
-                 Integer truckLength) {
+    public Truck(Vin vin, Integer odometerReading, TruckSize truckSize, Integer truckLength) {
         if (odometerReading < 0) {
             throw new IllegalArgumentException("Cannot buy a truck with negative odometer reading");
         }
 
         this.vin = vin;
-        this.status = status;
+        this.status = TruckStatus.RENTABLE;
         this.odometerReading = odometerReading;
         this.truckSize = truckSize;
         this.truckLength = truckLength;
+    }
+
+    public void returnFromInspection(int odometerReading) {
+        // TODO: implement for lab exercise
+    }
+
+    public void reserve() {
+        if (status != TruckStatus.RENTABLE) {
+            throw new IllegalStateException("Truck cannot be reserved");
+        }
+
+        this.status = TruckStatus.RESERVED;
+    }
+
+    public void pickUp() {
+        // TODO: implement for lab exercise
+    }
+
+    public void returnToService(int odometerReading) {
+        // TODO: implement for lab exercise
+    }
+
+    public void sendForInspection() {
+        // TODO: implement for lab exercise
     }
 
     public Vin getVin() {

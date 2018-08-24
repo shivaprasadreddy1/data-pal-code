@@ -8,17 +8,30 @@ import org.springframework.context.annotation.Configuration;
 public class AppConfig {
 
     @Bean
-    public FleetService fleetService(TruckRepository truckRepository,
+    public TruckSizeChart truckSizeChart() {
+        return new TruckSizeChart();
+    }
+
+    @Bean
+    public TruckAllocationService truckAllocationService(TruckRepository truckRepository) {
+        return new TruckAllocationService(truckRepository);
+    }
+
+    @Bean
+    public FleetService fleetService(TruckSizeChart truckSizeChart,
+                                     TruckRepository truckRepository,
                                      TruckInspectionRepository truckInspectionRepository) {
         return new FleetService(
+                truckSizeChart,
                 truckRepository,
                 truckInspectionRepository
         );
     }
 
     @Bean
-    public RentalService rentalService(RentalRepository rentalRepository,
+    public RentalService rentalService(TruckAllocationService truckAllocationService,
+                                       RentalRepository rentalRepository,
                                        TruckRepository truckRepository) {
-        return new RentalService(rentalRepository, truckRepository);
+        return new RentalService(truckAllocationService, rentalRepository, truckRepository);
     }
 }

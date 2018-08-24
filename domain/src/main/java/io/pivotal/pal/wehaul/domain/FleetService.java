@@ -7,11 +7,14 @@ import java.util.stream.StreamSupport;
 
 public class FleetService {
 
+    private final TruckSizeChart truckSizeChart;
     private final TruckRepository truckRepository;
     private final TruckInspectionRepository truckInspectionRepository;
 
-    public FleetService(TruckRepository truckRepository,
+    public FleetService(TruckSizeChart truckSizeChart,
+                        TruckRepository truckRepository,
                         TruckInspectionRepository truckInspectionRepository) {
+        this.truckSizeChart = truckSizeChart;
         this.truckRepository = truckRepository;
         this.truckInspectionRepository = truckInspectionRepository;
     }
@@ -19,11 +22,7 @@ public class FleetService {
     public void buyTruck(Vin vin, int odometerReading, int truckLength) {
         TruckSize truckSize = (truckLength >= 20) ? TruckSize.LARGE : TruckSize.SMALL;
 
-        Truck truck = new Truck(vin,
-                TruckStatus.RENTABLE,
-                odometerReading,
-                truckSize,
-                truckLength);
+        Truck truck = new Truck(vin, odometerReading, truckSize, truckLength);
 
         truckRepository.save(truck);
     }

@@ -1,6 +1,9 @@
 package io.pivotal.pal.wehaul.application;
 
-import io.pivotal.pal.wehaul.domain.*;
+import io.pivotal.pal.wehaul.domain.Truck;
+import io.pivotal.pal.wehaul.domain.TruckRepository;
+import io.pivotal.pal.wehaul.domain.TruckSize;
+import io.pivotal.pal.wehaul.domain.Vin;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -18,23 +21,15 @@ public class DatabaseSeedConfig {
     public void populateDatabase() {
         Truck truck = new Truck(
                 Vin.of("test-0001"),
-                TruckStatus.RENTABLE,
                 0,
                 TruckSize.LARGE,
                 25
         );
-
-        if (truck.getStatus() != TruckStatus.RENTABLE) {
-            throw new IllegalStateException("Truck cannot be inspected");
-        }
-
-        truck.setStatus(TruckStatus.IN_INSPECTION);
-
+        truck.sendForInspection();
         truckRepository.save(truck);
 
         Truck truck2 = new Truck(
                 Vin.of("test-0002"),
-                TruckStatus.RENTABLE,
                 0,
                 TruckSize.SMALL,
                 15

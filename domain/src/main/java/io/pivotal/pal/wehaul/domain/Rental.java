@@ -29,6 +29,14 @@ public class Rental {
         this.truckVin = truckVin;
     }
 
+    public void pickUp() {
+        // TODO: implement for lab exercise
+    }
+
+    public void dropOff(int distanceTraveled) {
+        // TODO: implement for lab exercise
+    }
+
     public ConfirmationNumber getConfirmationNumber() {
         return confirmationNumber;
     }

@@ -15,13 +15,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.assertj.core.api.Assertions.in;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class FleetServiceTest {
 
+    @Mock
+    private TruckSizeChart mockTruckSizeChart;
     @Mock
     private TruckRepository mockTruckRepository;
     @Mock
@@ -36,6 +37,7 @@ public class FleetServiceTest {
     @Before
     public void setUp() {
         fleetService = new FleetService(
+                mockTruckSizeChart,
                 mockTruckRepository,
                 mockTruckInspectionRepository
         );
@@ -43,10 +45,14 @@ public class FleetServiceTest {
 
     @Test
     public void buyTruck() {
+        when(mockTruckSizeChart.getSizeByTruckLength(anyInt())).thenReturn(TruckSize.LARGE);
+
+
         fleetService.buyTruck(Vin.of("some-vin"), 1000, 25);
 
-        InOrder inOrder = inOrder(mockTruckRepository);
 
+        InOrder inOrder = inOrder(mockTruckSizeChart, mockTruckRepository);
+        inOrder.verify(mockTruckSizeChart).getSizeByTruckLength(25);
         inOrder.verify(mockTruckRepository).save(truckCaptor.capture());
 
         Truck savedTruck = truckCaptor.getValue();
@@ -63,13 +69,15 @@ public class FleetServiceTest {
         when(mockTruckRepository.findOne(any())).thenReturn(mockTruck);
         Vin vin = Vin.of("some-vin");
 
+
         fleetService.sendForInspection(vin);
+
 
         InOrder inOrder = inOrder(mockTruck, mockTruckRepository);
         inOrder.verify(mockTruckRepository).findOne(vin);
-        inOrder.verify(mockTruck).getStatus();
-        inOrder.verify(mockTruck).setStatus(TruckStatus.IN_INSPECTION);
+        inOrder.verify(mockTruck).sendForInspection();
         inOrder.verify(mockTruckRepository).save(mockTruck);
+
         verifyNoMoreInteractions(mockTruck);
     }
 
@@ -82,16 +90,13 @@ public class FleetServiceTest {
         String notes = "some-notes";
         int odometerReading = 2;
 
+
         fleetService.returnFromInspection(vin, notes, odometerReading);
+
 
         InOrder inOrder = inOrder(mockTruck, mockTruckRepository, mockTruckInspectionRepository);
         inOrder.verify(mockTruckRepository).findOne(vin);
-
-        inOrder.verify(mockTruck).getStatus();
-        inOrder.verify(mockTruck).getOdometerReading();
-        inOrder.verify(mockTruck).setStatus(TruckStatus.RENTABLE);
-        inOrder.verify(mockTruck).setOdometerReading(odometerReading);
-
+        inOrder.verify(mockTruck).returnFromInspection(odometerReading);
         inOrder.verify(mockTruckRepository).save(mockTruck);
         inOrder.verify(mockTruckInspectionRepository).save(truckInspectionCaptor.capture());
 

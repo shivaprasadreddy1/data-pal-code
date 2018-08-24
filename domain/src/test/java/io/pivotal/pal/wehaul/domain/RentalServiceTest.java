@@ -24,6 +24,8 @@ import static org.mockito.Mockito.*;
 public class RentalServiceTest {
 
     @Mock
+    private TruckAllocationService mockTruckAllocationService;
+    @Mock
     private RentalRepository mockRentalRepository;
     @Mock
     private TruckRepository mockTruckRepository;
@@ -36,28 +38,26 @@ public class RentalServiceTest {
 
     @Before
     public void setUp() {
-        rentalService = new RentalService(mockRentalRepository, mockTruckRepository);
+        rentalService = new RentalService(mockTruckAllocationService, mockRentalRepository, mockTruckRepository);
     }
 
     @Test
     public void create() {
+        List<Truck> trucks = Arrays.asList(mock(Truck.class), mock(Truck.class));
+        when(mockTruckRepository.findAllByTruckSizeAndStatus(any(), any())).thenReturn(trucks);
 
         Truck mockTruck = mock(Truck.class);
-        Truck mockTruck1 = mock(Truck.class);
-
         when(mockTruck.getVin()).thenReturn(Vin.of("some-vin"));
-        when(mockTruck.getStatus()).thenReturn(TruckStatus.RENTABLE);
-
-        when(mockTruck.getVin()).thenReturn(Vin.of("some-vin"));
-        when(mockTruck.getStatus()).thenReturn(TruckStatus.RENTABLE);
         String customerName = "some-customer-name";
+        when(mockTruckAllocationService.allocateTruck(any(TruckSize.class))).thenReturn(mockTruck);
 
-        List<Truck> trucks = Arrays.asList(mockTruck, mockTruck1);
-        when(mockTruckRepository.findAllByTruckSizeAndStatus(any(), any())).thenReturn(trucks);
 
         rentalService.create(customerName, TruckSize.LARGE);
 
-        InOrder inOrder = inOrder(mockTruck, mockTruckRepository, mockRentalRepository);
+
+        InOrder inOrder = inOrder(mockTruck, mockTruckAllocationService, mockTruckRepository, mockRentalRepository);
+        inOrder.verify(mockTruckAllocationService).allocateTruck(TruckSize.LARGE);
+        inOrder.verify(mockTruck).reserve();
         inOrder.verify(mockTruckRepository).save(truckCaptor.capture());
         inOrder.verify(mockRentalRepository).save(rentalCaptor.capture());
 
@@ -82,23 +82,20 @@ public class RentalServiceTest {
 
         ConfirmationNumber confirmationNumber = mockRental.getConfirmationNumber();
 
+
         rentalService.pickUp(confirmationNumber);
 
+
         InOrder inOrder = inOrder(mockRental, mockRentalRepository, mockTruck, mockTruckRepository);
-
-
         inOrder.verify(mockRentalRepository).findOne(confirmationNumber);
+        inOrder.verify(mockRental).pickUp();
         inOrder.verify(mockRentalRepository).save(mockRental);
 
         inOrder.verify(mockTruckRepository).findOne(Vin.of("some-vin"));
+        inOrder.verify(mockTruck).pickUp();
         inOrder.verify(mockTruckRepository).save(mockTruck);
 
-        verify(mockTruck).getStatus();
-        verify(mockTruck).setStatus(TruckStatus.RENTED);
-
         verify(mockRental).getConfirmationNumber();
-        verify(mockRental).getDistanceTraveled();
-        verify(mockRental).setDistanceTraveled(0);
         verify(mockRental).getTruckVin();
         verifyNoMoreInteractions(mockRental, mockTruck);
     }
@@ -122,26 +119,19 @@ public class RentalServiceTest {
 
         InOrder inOrder = inOrder(mockRental, mockRentalRepository, mockTruck, mockTruckRepository);
         inOrder.verify(mockRentalRepository).findOne(confirmationNumber);
-
-        verify(mockRental, times(2)).getDistanceTraveled();
-
+        inOrder.verify(mockRental).dropOff(distanceTraveled);
         inOrder.verify(mockRentalRepository).save(rentalCaptor.capture());
         Rental savedRental = rentalCaptor.getValue();
         assertThat(savedRental).isSameAs(mockRental);
 
         inOrder.verify(mockTruckRepository).findOne(any());
+        inOrder.verify(mockTruck).returnToService(10_000 + 500);
         inOrder.verify(mockTruckRepository).save(truckCaptor.capture());
         Truck savedTruck = truckCaptor.getValue();
         assertThat(savedTruck).isSameAs(mockTruck);
 
         verify(mockRental).getTruckVin();
-        verify(mockTruck, times(2)).getOdometerReading();
-        verify(mockTruck).getStatus();
-
-        verify(mockTruck).setStatus(TruckStatus.RENTABLE);
-        verify(mockTruck).setOdometerReading(10_500);
-
-        verify(mockRental).setDistanceTraveled(distanceTraveled);
+        verify(mockTruck).getOdometerReading();
         verifyNoMoreInteractions(mockRental, mockTruck);
     }
 

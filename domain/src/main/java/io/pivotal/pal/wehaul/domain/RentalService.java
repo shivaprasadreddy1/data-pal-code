@@ -8,11 +8,14 @@ import java.util.stream.StreamSupport;
 
 public class RentalService {
 
+    private final TruckAllocationService truckAllocationService;
     private final RentalRepository rentalRepository;
     private final TruckRepository truckRepository;
 
-    public RentalService(RentalRepository rentalRepository,
+    public RentalService(TruckAllocationService truckAllocationService,
+                         RentalRepository rentalRepository,
                          TruckRepository truckRepository) {
+        this.truckAllocationService = truckAllocationService;
         this.rentalRepository = rentalRepository;
         this.truckRepository = truckRepository;
     }
@@ -30,11 +33,7 @@ public class RentalService {
 
         Truck truck = availableTrucks.get(0);
 
-        if (truck.getStatus() != TruckStatus.RENTABLE) {
-            throw new IllegalStateException("Truck cannot be reserved");
-        }
-
-        truck.setStatus(TruckStatus.RESERVED);
+        truck.reserve();
         truckRepository.save(truck);
 
         Rental rental = new Rental(customerName, truck.getVin());
