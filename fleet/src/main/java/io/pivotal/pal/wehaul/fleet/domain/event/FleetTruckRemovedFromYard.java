@@ -6,6 +6,10 @@ public class FleetTruckRemovedFromYard extends FleetTruckEvent {
         super(vin, status);
     }
 
+    private FleetTruckRemovedFromYard() {
+        super();
+    }
+
     @Override
     public String toString() {
         return "FleetTruckRemovedFromYard{" +

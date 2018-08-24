@@ -16,6 +16,12 @@ public abstract class FleetTruckEvent {
         this.createdDate = LocalDateTime.now();
     }
 
+    protected FleetTruckEvent() {
+        this.vin = null;
+        this.status = null;
+        this.createdDate = null;
+    }
+
     public String getVin() {
         return vin;
     }

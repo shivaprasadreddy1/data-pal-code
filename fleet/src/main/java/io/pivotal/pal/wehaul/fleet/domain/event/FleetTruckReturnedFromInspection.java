@@ -13,6 +13,12 @@ public class FleetTruckReturnedFromInspection extends FleetTruckEvent {
         this.notes = notes;
     }
 
+    private FleetTruckReturnedFromInspection() {
+        super();
+        this.odometerReading = null;
+        this.notes = null;
+    }
+
     public Integer getOdometerReading() {
         return odometerReading;
     }

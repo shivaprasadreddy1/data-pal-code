@@ -6,6 +6,10 @@ public class FleetTruckSentForInspection extends FleetTruckEvent {
         super(vin, status);
     }
 
+    private FleetTruckSentForInspection() {
+        super();
+    }
+
     @Override
     public String toString() {
         return "FleetTruckSentForInspection{" +

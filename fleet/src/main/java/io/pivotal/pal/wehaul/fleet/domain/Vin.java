@@ -1,18 +1,11 @@
 package io.pivotal.pal.wehaul.fleet.domain;
 
-import javax.persistence.Embeddable;
 import java.io.Serializable;
 import java.util.Objects;
 
-@Embeddable
 public class Vin implements Serializable {
 
     private final String vin;
-
-    Vin() {
-        // default constructor required by JPA
-        this.vin = null;
-    }
 
     private Vin(String vin) {
         this.vin = vin;

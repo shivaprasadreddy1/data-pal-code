@@ -13,6 +13,12 @@ public class FleetTruckPurchased extends FleetTruckEvent {
         this.truckLength = truckLength;
     }
 
+    private FleetTruckPurchased() {
+        super();
+        this.odometerReading = null;
+        this.truckLength = null;
+    }
+
     public Integer getOdometerReading() {
         return odometerReading;
     }

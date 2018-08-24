@@ -3,33 +3,22 @@ package io.pivotal.pal.wehaul.fleet.domain;
 import io.pivotal.pal.wehaul.fleet.domain.event.*;
 import org.springframework.data.domain.AbstractAggregateRoot;
 
-import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
-@Entity(name = "fleetTruck")
-@Table(name = "fleet_truck")
 public class FleetTruck extends AbstractAggregateRoot {
 
-    @EmbeddedId
     private Vin vin;
-
-    @Enumerated(EnumType.STRING)
-    @Column
+    private int version;
     private FleetTruckStatus status;
-
-    @Column
     private Integer odometerReading;
-
-    @Column
     private Integer truckLength;
-
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JoinColumn(name = "truckVin", referencedColumnName = "vin")
     private List<TruckInspection> inspections = new ArrayList<>();
 
-    FleetTruck() {
-        // default constructor required by JPA
+
+    private FleetTruck() {
+        // construct via static initializer
     }
 
     public FleetTruck(Vin vin, Integer odometerReading, Integer truckLength) {
@@ -37,12 +26,41 @@ public class FleetTruck extends AbstractAggregateRoot {
             throw new IllegalArgumentException("Cannot buy a truck with negative odometer reading");
         }
 
-        this.vin = vin;
-        this.status = FleetTruckStatus.INSPECTABLE;
-        this.odometerReading = odometerReading;
-        this.truckLength = truckLength;
+        FleetTruckPurchased event = new FleetTruckPurchased(
+                vin.getVin(),
+                FleetTruckStatus.INSPECTABLE.toString(),
+                truckLength,
+                odometerReading
+        );
 
-        this.registerEvent(new FleetTruckPurchased(this.vin.getVin(), this.status.toString(), this.truckLength, this.odometerReading));
+        handleEvent(event);
+
+        this.version = 0;
+    }
+
+    public static FleetTruck fromEvents(List<FleetTruckEvent> events) {
+        final FleetTruck fleetTruck = new FleetTruck();
+        events.forEach(event -> fleetTruck.applyEvent(event));
+        fleetTruck.version = events.size() - 1;
+
+        return fleetTruck;
+    }
+
+    private void applyEvent(FleetTruckEvent event) {
+        if (event instanceof FleetTruckPurchased) {
+            handleEvent((FleetTruckPurchased) event);
+        } else {
+            throw new IllegalArgumentException("Unknown event type: " + event.getClass());
+        }
+    }
+
+    private void handleEvent(FleetTruckPurchased event) {
+        this.vin = Vin.of(event.getVin());
+        this.status = FleetTruckStatus.valueOf(event.getStatus());
+        this.odometerReading = event.getOdometerReading();
+        this.truckLength = event.getTruckLength();
+
+        this.registerEvent(event);
     }
 
     public void returnFromInspection(String notes, int odometerReading) {
@@ -53,13 +71,25 @@ public class FleetTruck extends AbstractAggregateRoot {
             throw new IllegalArgumentException("Odometer reading cannot be less than previous reading");
         }
 
-        this.status = FleetTruckStatus.INSPECTABLE;
-        this.odometerReading = odometerReading;
+        FleetTruckReturnedFromInspection event = new FleetTruckReturnedFromInspection(
+                this.vin.getVin(),
+                FleetTruckStatus.INSPECTABLE.toString(),
+                odometerReading,
+                notes
+        );
 
-        TruckInspection truckInspection = new TruckInspection(this.vin, odometerReading, notes);
+        this.status = FleetTruckStatus.valueOf(event.getStatus());
+        this.odometerReading = event.getOdometerReading();
+
+        TruckInspection truckInspection =
+                new TruckInspection(this.vin, event.getOdometerReading(), event.getNotes());
         this.inspections.add(truckInspection);
 
-        this.registerEvent(new FleetTruckReturnedFromInspection(this.vin.getVin(), this.status.toString(), this.odometerReading, notes));
+        this.registerEvent(event);
+    }
+
+    private void handleEvent(FleetTruckReturnedFromInspection event) {
+        // TODO implement me
     }
 
     public void sendForInspection() {
@@ -67,9 +97,18 @@ public class FleetTruck extends AbstractAggregateRoot {
             throw new IllegalStateException("Truck cannot be inspected");
         }
 
-        this.status = FleetTruckStatus.IN_INSPECTION;
+        FleetTruckSentForInspection event = new FleetTruckSentForInspection(
+                this.vin.getVin(),
+                FleetTruckStatus.IN_INSPECTION.toString()
+        );
+
+        this.status = FleetTruckStatus.valueOf(event.getStatus());
 
         this.registerEvent(new FleetTruckSentForInspection(this.vin.getVin(), this.status.toString()));
+    }
+
+    private void handleEvent(FleetTruckSentForInspection event) {
+        // TODO implement me
     }
 
     public void removeFromYard() {
@@ -77,9 +116,17 @@ public class FleetTruck extends AbstractAggregateRoot {
             throw new IllegalStateException("Cannot remove truck, currently in inspection");
         }
 
-        this.status = FleetTruckStatus.NOT_INSPECTABLE;
+        FleetTruckRemovedFromYard event = new FleetTruckRemovedFromYard(
+                this.vin.getVin(),
+                FleetTruckStatus.NOT_INSPECTABLE.toString()
+        );
+        this.status = FleetTruckStatus.valueOf(event.getStatus());
 
-        this.registerEvent(new FleetTruckRemovedFromYard(this.vin.getVin(), this.status.toString()));
+        this.registerEvent(event);
+    }
+
+    private void handleEvent(FleetTruckRemovedFromYard event) {
+        // TODO implement me
     }
 
     public void returnToYard(int distanceTraveled) {
@@ -90,14 +137,35 @@ public class FleetTruck extends AbstractAggregateRoot {
             throw new IllegalArgumentException("Distance traveled cannot be negative");
         }
 
-        this.status = FleetTruckStatus.INSPECTABLE;
-        this.odometerReading += distanceTraveled;
+        FleetTruckReturnedToYard event = new FleetTruckReturnedToYard(
+                this.vin.getVin(),
+                FleetTruckStatus.INSPECTABLE.toString(),
+                distanceTraveled
+        );
 
-        this.registerEvent(new FleetTruckReturnedToYard(this.vin.getVin(), this.status.toString(), this.odometerReading));
+        this.status = FleetTruckStatus.valueOf(event.getStatus());
+        this.odometerReading += event.getDistanceTraveled();
+
+        this.registerEvent(event);
+    }
+
+    private void handleEvent(FleetTruckReturnedToYard event) {
+        // TODO implement me
+
+    }
+
+    public List<FleetTruckEvent> getDirtyEvents() {
+        return domainEvents().stream()
+                .map(obj -> (FleetTruckEvent) obj)
+                .collect(Collectors.toList());
     }
 
     public Vin getVin() {
         return vin;
+    }
+
+    public int getVersion() {
+        return version;
     }
 
     public FleetTruckStatus getStatus() {
@@ -120,6 +188,7 @@ public class FleetTruck extends AbstractAggregateRoot {
     public String toString() {
         return "FleetTruck{" +
                 "vin=" + vin +
+                ", version=" + version +
                 ", status=" + status +
                 ", odometerReading=" + odometerReading +
                 ", truckLength=" + truckLength +

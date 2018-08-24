@@ -1,6 +1,15 @@
 package io.pivotal.pal.wehaul.fleet.domain;
 
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.NoRepositoryBean;
+import org.springframework.data.repository.Repository;
 
-public interface FleetTruckRepository extends CrudRepository<FleetTruck, Vin> {
+import java.util.List;
+
+@NoRepositoryBean
+public interface FleetTruckRepository extends Repository<FleetTruck, Vin> {
+    FleetTruck save(FleetTruck fleetTruck);
+
+    FleetTruck findOne(Vin vin);
+
+    List<FleetTruck> findAll();
 }

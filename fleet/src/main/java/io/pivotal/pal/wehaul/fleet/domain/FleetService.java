@@ -1,8 +1,6 @@
 package io.pivotal.pal.wehaul.fleet.domain;
 
 import java.util.Collection;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 public class FleetService {
 
@@ -67,8 +65,6 @@ public class FleetService {
     }
 
     public Collection<FleetTruck> findAll() {
-
-        return StreamSupport.stream(fleetTruckRepository.findAll().spliterator(), false)
-                .collect(Collectors.toList());
+        return fleetTruckRepository.findAll();
     }
 }

@@ -15,6 +15,12 @@ public class RentalTruckDroppedOff {
         this.createdDate = LocalDateTime.now();
     }
 
+    private RentalTruckDroppedOff() {
+        this.vin = null;
+        this.distanceTraveled = -1;
+        this.createdDate = null;
+    }
+
     public String getVin() {
         return vin;
     }

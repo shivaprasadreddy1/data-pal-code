@@ -4,15 +4,20 @@ import java.util.Objects;
 
 public class FleetTruckReturnedToYard extends FleetTruckEvent {
 
-    protected final Integer odometerReading;
+    protected final Integer distanceTraveled;
 
-    public FleetTruckReturnedToYard(String vin, String status, Integer odometerReading) {
+    public FleetTruckReturnedToYard(String vin, String status, Integer distanceTraveled) {
         super(vin, status);
-        this.odometerReading = odometerReading;
+        this.distanceTraveled = distanceTraveled;
     }
 
-    public Integer getOdometerReading() {
-        return odometerReading;
+    private FleetTruckReturnedToYard() {
+        super();
+        this.distanceTraveled = null;
+    }
+
+    public Integer getDistanceTraveled() {
+        return distanceTraveled;
     }
 
     @Override
@@ -21,18 +26,18 @@ public class FleetTruckReturnedToYard extends FleetTruckEvent {
         if (!(o instanceof FleetTruckReturnedToYard)) return false;
         if (!super.equals(o)) return false;
         FleetTruckReturnedToYard that = (FleetTruckReturnedToYard) o;
-        return Objects.equals(odometerReading, that.odometerReading);
+        return Objects.equals(distanceTraveled, that.distanceTraveled);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), odometerReading);
+        return Objects.hash(super.hashCode(), distanceTraveled);
     }
 
     @Override
     public String toString() {
         return "FleetTruckReturnedToYard{" +
-                "odometerReading=" + odometerReading +
+                "distanceTraveled=" + distanceTraveled +
                 ", vin='" + vin + '\'' +
                 ", status='" + status + '\'' +
                 ", createdDate=" + createdDate +

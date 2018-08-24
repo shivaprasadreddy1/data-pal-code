@@ -14,6 +14,11 @@ public class RentalTruckReserved {
         this.createdDate = LocalDateTime.now();
     }
 
+    private RentalTruckReserved() {
+        this.vin = null;
+        this.createdDate = null;
+    }
+
     public String getVin() {
         return vin;
     }
