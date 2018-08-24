@@ -11,7 +11,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.repository.NoRepositoryBean;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -33,8 +32,9 @@ public class FleetTruckEventSourcedRepository implements FleetTruckRepository {
 
     @Override
     public FleetTruck save(FleetTruck fleetTruck) {
-        // TODO replace me
-        List<FleetTruckEventStoreEntity> eventEntities = Collections.emptyList();
+        List<FleetTruckEvent> events = fleetTruck.getDirtyEvents();
+
+        List<FleetTruckEventStoreEntity> eventEntities = mapEventToEntities(events, fleetTruck.getVersion());
 
         eventStoreRepository.save(eventEntities);
 
@@ -43,8 +43,16 @@ public class FleetTruckEventSourcedRepository implements FleetTruckRepository {
 
     @Override
     public FleetTruck findOne(Vin vin) {
-        // TODO replace me
-        return null;
+        List<FleetTruckEventStoreEntity> eventEntities =
+                eventStoreRepository.findAllByKeyVinOrderByKeyVersion(vin.getVin());
+
+        if (eventEntities.size() < 1) {
+            return null;
+        }
+
+        List<FleetTruckEvent> fleetTruckEvents = mapEntitiesToEvents(eventEntities);
+
+        return FleetTruck.fromEvents(fleetTruckEvents);
     }
 
     @Override
@@ -69,8 +77,10 @@ public class FleetTruckEventSourcedRepository implements FleetTruckRepository {
                     FleetTruckEvent event = events.get(i);
                     String eventJson = serializeEvent(event);
 
-                    // TODO replace me
-                    return (FleetTruckEventStoreEntity) null;
+                    FleetTruckEventStoreEntityKey eventEntityKey =
+                            new FleetTruckEventStoreEntityKey(event.getVin(), i + versionStart + 1);
+
+                    return new FleetTruckEventStoreEntity(eventEntityKey, event.getClass(), eventJson);
                 })
                 .collect(Collectors.toList());
     }

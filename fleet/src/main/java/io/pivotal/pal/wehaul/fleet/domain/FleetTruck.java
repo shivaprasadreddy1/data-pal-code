@@ -43,12 +43,21 @@ public class FleetTruck extends AbstractAggregateRoot {
         events.forEach(event -> fleetTruck.applyEvent(event));
         fleetTruck.version = events.size() - 1;
 
+        fleetTruck.clearDomainEvents();
         return fleetTruck;
     }
 
     private void applyEvent(FleetTruckEvent event) {
         if (event instanceof FleetTruckPurchased) {
             handleEvent((FleetTruckPurchased) event);
+        } else if (event instanceof FleetTruckRemovedFromYard) {
+            handleEvent((FleetTruckRemovedFromYard) event);
+        } else if (event instanceof FleetTruckReturnedFromInspection) {
+            handleEvent((FleetTruckReturnedFromInspection) event);
+        } else if (event instanceof FleetTruckReturnedToYard) {
+            handleEvent((FleetTruckReturnedToYard) event);
+        } else if (event instanceof FleetTruckSentForInspection) {
+            handleEvent((FleetTruckSentForInspection) event);
         } else {
             throw new IllegalArgumentException("Unknown event type: " + event.getClass());
         }
@@ -78,6 +87,10 @@ public class FleetTruck extends AbstractAggregateRoot {
                 notes
         );
 
+        handleEvent(event);
+    }
+
+    private void handleEvent(FleetTruckReturnedFromInspection event) {
         this.status = FleetTruckStatus.valueOf(event.getStatus());
         this.odometerReading = event.getOdometerReading();
 
@@ -86,10 +99,6 @@ public class FleetTruck extends AbstractAggregateRoot {
         this.inspections.add(truckInspection);
 
         this.registerEvent(event);
-    }
-
-    private void handleEvent(FleetTruckReturnedFromInspection event) {
-        // TODO implement me
     }
 
     public void sendForInspection() {
@@ -102,13 +111,13 @@ public class FleetTruck extends AbstractAggregateRoot {
                 FleetTruckStatus.IN_INSPECTION.toString()
         );
 
-        this.status = FleetTruckStatus.valueOf(event.getStatus());
-
-        this.registerEvent(new FleetTruckSentForInspection(this.vin.getVin(), this.status.toString()));
+        handleEvent(event);
     }
 
     private void handleEvent(FleetTruckSentForInspection event) {
-        // TODO implement me
+        this.status = FleetTruckStatus.valueOf(event.getStatus());
+
+        this.registerEvent(new FleetTruckSentForInspection(this.vin.getVin(), this.status.toString()));
     }
 
     public void removeFromYard() {
@@ -120,13 +129,13 @@ public class FleetTruck extends AbstractAggregateRoot {
                 this.vin.getVin(),
                 FleetTruckStatus.NOT_INSPECTABLE.toString()
         );
-        this.status = FleetTruckStatus.valueOf(event.getStatus());
-
-        this.registerEvent(event);
+        handleEvent(event);
     }
 
     private void handleEvent(FleetTruckRemovedFromYard event) {
-        // TODO implement me
+        this.status = FleetTruckStatus.valueOf(event.getStatus());
+
+        this.registerEvent(event);
     }
 
     public void returnToYard(int distanceTraveled) {
@@ -143,15 +152,14 @@ public class FleetTruck extends AbstractAggregateRoot {
                 distanceTraveled
         );
 
+        handleEvent(event);
+    }
+
+    private void handleEvent(FleetTruckReturnedToYard event) {
         this.status = FleetTruckStatus.valueOf(event.getStatus());
         this.odometerReading += event.getDistanceTraveled();
 
         this.registerEvent(event);
-    }
-
-    private void handleEvent(FleetTruckReturnedToYard event) {
-        // TODO implement me
-
     }
 
     public List<FleetTruckEvent> getDirtyEvents() {
