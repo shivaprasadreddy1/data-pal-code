@@ -2,10 +2,7 @@ package io.pivotal.pal.wehaul.application;
 
 import io.pivotal.pal.wehaul.fleet.domain.FleetService;
 import io.pivotal.pal.wehaul.fleet.domain.FleetTruckRepository;
-import io.pivotal.pal.wehaul.rental.domain.RentalService;
-import io.pivotal.pal.wehaul.rental.domain.RentalTruckRepository;
-import io.pivotal.pal.wehaul.rental.domain.TruckAllocationService;
-import io.pivotal.pal.wehaul.rental.domain.TruckSizeChart;
+import io.pivotal.pal.wehaul.rental.domain.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

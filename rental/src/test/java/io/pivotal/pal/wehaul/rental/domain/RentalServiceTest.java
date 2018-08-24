@@ -10,6 +10,7 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -29,6 +30,8 @@ public class RentalServiceTest {
     private TruckSizeChart mockTruckSizeChart;
     @Mock
     private RentalTruckRepository mockRentalTruckRepository;
+    @Captor
+    private ArgumentCaptor<Rental> rentalCaptor;
     @Captor
     private ArgumentCaptor<RentalTruck> truckCaptor;
 

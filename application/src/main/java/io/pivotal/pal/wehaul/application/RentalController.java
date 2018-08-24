@@ -64,10 +64,10 @@ public class RentalController {
     public ResponseEntity<List<RentalDto>> getAllRentals() {
 
         List<RentalDto> rentalDtos = rentalService.findAll().stream()
-            .map(RentalTruck::getRental)
-            .map(rental -> mapRentalToDto(rental))
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
+                .map(RentalTruck::getRental)
+                .map(rental -> mapRentalToDto(rental))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
 
         return ResponseEntity.ok(rentalDtos);
     }
