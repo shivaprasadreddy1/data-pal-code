@@ -2,7 +2,11 @@ package io.pivotal.pal.wehaul.application;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.pivotal.pal.wehaul.domain.*;
+import io.pivotal.pal.wehaul.fleet.domain.FleetService;
+import io.pivotal.pal.wehaul.rental.domain.ConfirmationNumber;
+import io.pivotal.pal.wehaul.rental.domain.Rental;
+import io.pivotal.pal.wehaul.rental.domain.RentalService;
+import io.pivotal.pal.wehaul.rental.domain.TruckSize;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,9 +19,11 @@ import java.util.stream.Collectors;
 public class RentalController {
 
     private final RentalService rentalService;
+    private final FleetService fleetService;
 
-    public RentalController(RentalService rentalService) {
+    public RentalController(RentalService rentalService, FleetService fleetService) {
         this.rentalService = rentalService;
+        this.fleetService = fleetService;
     }
 
     @PostMapping
@@ -42,7 +48,11 @@ public class RentalController {
                                               @RequestBody DropOffRentalDto dropOffRentalDto) {
 
         int distanceTraveled = dropOffRentalDto.getDistanceTraveled();
-        rentalService.dropOff(ConfirmationNumber.of(confirmationNumber), distanceTraveled);
+        Rental rental = rentalService.dropOff(ConfirmationNumber.of(confirmationNumber), distanceTraveled);
+
+        io.pivotal.pal.wehaul.fleet.domain.Vin fleetVin =
+                io.pivotal.pal.wehaul.fleet.domain.Vin.of(rental.getTruckVin().getVin());
+        fleetService.returnToYard(fleetVin, dropOffRentalDto.getDistanceTraveled());
 
         return ResponseEntity.ok().build();
     }

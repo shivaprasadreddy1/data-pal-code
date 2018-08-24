@@ -73,14 +73,14 @@ public class TruckTest {
     }
 
     @Test
-    public void returnToService() {
+    public void returnToYard() {
         Truck truck = new Truck(Vin.of("test-0001"), 0, null, null);
         truck.reserve();
         truck.pickUp();
         int odometerReading = 101;
 
 
-        truck.returnToService(odometerReading);
+        truck.returnToYard(odometerReading);
 
 
         assertThat(truck.getStatus()).isEqualTo(TruckStatus.RENTABLE);
@@ -155,24 +155,24 @@ public class TruckTest {
     }
 
     @Test
-    public void returnToService_withLowerOdometerReading() {
+    public void returnToYard_withLowerOdometerReading() {
         Truck truck = new Truck(Vin.of("test-0001"), 100, null, null);
         truck.reserve();
         truck.pickUp();
 
 
         assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> truck.returnToService(99))
+                .isThrownBy(() -> truck.returnToYard(99))
                 .withMessage("Odometer reading cannot be less than previous reading");
     }
 
     @Test
-    public void returnToService_whenNotRented() {
+    public void returnToYard_whenNotRented() {
         Truck truck = new Truck(Vin.of("test-0001"), 100, null, null);
 
 
         assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(() -> truck.returnToService(101))
+                .isThrownBy(() -> truck.returnToYard(101))
                 .withMessage("Truck is not currently rented");
     }
 }

@@ -1,6 +1,9 @@
 package io.pivotal.pal.wehaul.application;
 
-import io.pivotal.pal.wehaul.domain.*;
+import io.pivotal.pal.wehaul.fleet.domain.FleetService;
+import io.pivotal.pal.wehaul.fleet.domain.TruckInspectionRepository;
+import io.pivotal.pal.wehaul.fleet.domain.FleetTruckRepository;
+import io.pivotal.pal.wehaul.rental.domain.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -13,17 +16,15 @@ public class AppConfig {
     }
 
     @Bean
-    public TruckAllocationService truckAllocationService(TruckRepository truckRepository) {
-        return new TruckAllocationService(truckRepository);
+    public TruckAllocationService truckAllocationService(RentalTruckRepository rentalTruckRepository) {
+        return new TruckAllocationService(rentalTruckRepository);
     }
 
     @Bean
-    public FleetService fleetService(TruckSizeChart truckSizeChart,
-                                     TruckRepository truckRepository,
+    public FleetService fleetService(FleetTruckRepository fleetTruckRepository,
                                      TruckInspectionRepository truckInspectionRepository) {
         return new FleetService(
-                truckSizeChart,
-                truckRepository,
+                fleetTruckRepository,
                 truckInspectionRepository
         );
     }
@@ -31,7 +32,8 @@ public class AppConfig {
     @Bean
     public RentalService rentalService(TruckAllocationService truckAllocationService,
                                        RentalRepository rentalRepository,
-                                       TruckRepository truckRepository) {
-        return new RentalService(truckAllocationService, rentalRepository, truckRepository);
+                                       RentalTruckRepository rentalTruckRepository,
+                                       TruckSizeChart truckSizeChart) {
+        return new RentalService(truckAllocationService, rentalRepository, rentalTruckRepository, truckSizeChart);
     }
 }

@@ -67,7 +67,7 @@ public class Truck {
         this.status = TruckStatus.RENTED;
     }
 
-    public void returnToService(int odometerReading) {
+    public void returnToYard(int odometerReading) {
         if (status != TruckStatus.RENTED) {
             throw new IllegalStateException("Truck is not currently rented");
         }

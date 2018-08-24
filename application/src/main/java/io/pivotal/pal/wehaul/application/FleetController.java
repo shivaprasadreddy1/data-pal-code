@@ -2,9 +2,10 @@ package io.pivotal.pal.wehaul.application;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.pivotal.pal.wehaul.domain.FleetService;
-import io.pivotal.pal.wehaul.domain.Truck;
-import io.pivotal.pal.wehaul.domain.Vin;
+import io.pivotal.pal.wehaul.fleet.domain.FleetService;
+import io.pivotal.pal.wehaul.fleet.domain.FleetTruck;
+import io.pivotal.pal.wehaul.fleet.domain.Vin;
+import io.pivotal.pal.wehaul.rental.domain.RentalService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,40 +18,46 @@ import java.util.stream.Collectors;
 public class FleetController {
 
     private final FleetService fleetService;
+    private final RentalService rentalService;
 
-    public FleetController(FleetService fleetService) {
+    public FleetController(FleetService fleetService, RentalService rentalService) {
         this.fleetService = fleetService;
+        this.rentalService = rentalService;
     }
 
     @PostMapping
     public ResponseEntity<Void> buyTruck(@RequestBody BuyTruckDto buyTruckDto) {
 
-        fleetService.buyTruck(
+        FleetTruck fleetTruck = fleetService.buyTruck(
                 Vin.of(buyTruckDto.getVin()),
                 buyTruckDto.getOdometerReading(),
                 buyTruckDto.getTruckLength()
         );
+
+        io.pivotal.pal.wehaul.rental.domain.Vin rentalVin =
+                io.pivotal.pal.wehaul.rental.domain.Vin.of(fleetTruck.getVin().getVin());
+        rentalService.addTruck(rentalVin, buyTruckDto.getTruckLength());
+
         return ResponseEntity.ok().build();
     }
 
     @GetMapping
     public ResponseEntity<Collection<TruckDto>> getAllTrucks() {
-        Collection<Truck> trucks = fleetService.findAll();
+        Collection<FleetTruck> fleetTrucks = fleetService.findAll();
 
-        List<TruckDto> trucksDto = trucks.stream()
+        List<TruckDto> trucksDto = fleetTrucks.stream()
                 .map(truck -> mapTruckToDto(truck))
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(trucksDto);
     }
 
-    private TruckDto mapTruckToDto(Truck truck) {
+    private TruckDto mapTruckToDto(FleetTruck fleetTruck) {
         return new TruckDto(
-                truck.getVin().getVin(),
-                truck.getStatus().name(),
-                truck.getOdometerReading(),
-                truck.getTruckSize().name(),
-                truck.getTruckLength()
+                fleetTruck.getVin().getVin(),
+                fleetTruck.getStatus().name(),
+                fleetTruck.getOdometerReading(),
+                fleetTruck.getTruckLength()
         );
     }
 
@@ -58,6 +65,7 @@ public class FleetController {
     public ResponseEntity<Void> sendForInspection(@PathVariable String vin) {
 
         fleetService.sendForInspection(Vin.of(vin));
+        rentalService.preventRenting(io.pivotal.pal.wehaul.rental.domain.Vin.of(vin));
         return ResponseEntity.ok().build();
     }
 
@@ -71,6 +79,8 @@ public class FleetController {
         int odometerReading = returnFromInspectionDto.getOdometerReading();
 
         fleetService.returnFromInspection(Vin.of(vin), notes, odometerReading);
+        rentalService.allowRenting(io.pivotal.pal.wehaul.rental.domain.Vin.of(vin));
+
         return ResponseEntity.ok().build();
     }
 
@@ -147,14 +157,12 @@ public class FleetController {
         private final String vin;
         private final String status;
         private final Integer odometerReading;
-        private final String truckSize;
         private final Integer truckLength;
 
-        TruckDto(String vin, String status, Integer odometerReading, String truckSize, Integer truckLength) {
+        TruckDto(String vin, String status, Integer odometerReading, Integer truckLength) {
             this.vin = vin;
             this.status = status;
             this.odometerReading = odometerReading;
-            this.truckSize = truckSize;
             this.truckLength = truckLength;
         }
 
@@ -170,10 +178,6 @@ public class FleetController {
             return odometerReading;
         }
 
-        public String getTruckSize() {
-            return truckSize;
-        }
-
         public Integer getTruckLength() {
             return truckLength;
         }
@@ -184,7 +188,6 @@ public class FleetController {
                     "vin='" + vin + '\'' +
                     ", status='" + status + '\'' +
                     ", odometerReading=" + odometerReading +
-                    ", truckSize='" + truckSize + '\'' +
                     ", truckLength=" + truckLength +
                     '}';
         }

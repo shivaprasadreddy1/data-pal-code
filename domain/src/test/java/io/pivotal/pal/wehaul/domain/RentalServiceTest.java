@@ -125,7 +125,7 @@ public class RentalServiceTest {
         assertThat(savedRental).isSameAs(mockRental);
 
         inOrder.verify(mockTruckRepository).findOne(any());
-        inOrder.verify(mockTruck).returnToService(10_000 + 500);
+        inOrder.verify(mockTruck).returnToYard(10_000 + 500);
         inOrder.verify(mockTruckRepository).save(truckCaptor.capture());
         Truck savedTruck = truckCaptor.getValue();
         assertThat(savedTruck).isSameAs(mockTruck);

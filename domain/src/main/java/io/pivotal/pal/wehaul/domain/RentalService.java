@@ -58,7 +58,7 @@ public class RentalService {
 
         Vin vin = rental.getTruckVin();
         Truck truck = truckRepository.findOne(vin);
-        truck.returnToService(truck.getOdometerReading() + distanceTraveled);
+        truck.returnToYard(truck.getOdometerReading() + distanceTraveled);
         truckRepository.save(truck);
     }
 

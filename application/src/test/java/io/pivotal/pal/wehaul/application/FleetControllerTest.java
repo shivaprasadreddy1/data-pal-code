@@ -1,13 +1,14 @@
 package io.pivotal.pal.wehaul.application;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.pivotal.pal.wehaul.domain.FleetService;
-import io.pivotal.pal.wehaul.domain.Truck;
-import io.pivotal.pal.wehaul.domain.TruckSize;
-import io.pivotal.pal.wehaul.domain.Vin;
+import io.pivotal.pal.wehaul.fleet.domain.FleetService;
+import io.pivotal.pal.wehaul.fleet.domain.FleetTruck;
+import io.pivotal.pal.wehaul.rental.domain.RentalService;
+import io.pivotal.pal.wehaul.fleet.domain.Vin;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.http.MediaType;
@@ -17,8 +18,9 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -31,17 +33,23 @@ public class FleetControllerTest {
 
     @Mock
     private FleetService mockFleetService;
+    @Mock
+    private RentalService mockRentalService;
 
     private MockMvc mockMvc;
 
     @Before
     public void setUp() {
-        FleetController fleetController = new FleetController(mockFleetService);
+        FleetController fleetController = new FleetController(mockFleetService, mockRentalService);
         mockMvc = MockMvcBuilders.standaloneSetup(fleetController).build();
     }
 
     @Test
     public void buyTruck() throws Exception {
+        FleetTruck mockFleetTruck = mock(FleetTruck.class);
+        when(mockFleetTruck.getVin()).thenReturn(Vin.of("some-vin"));
+        when(mockFleetService.buyTruck(any(), anyInt(), anyInt())).thenReturn(mockFleetTruck);
+
         FleetController.BuyTruckDto requestDto =
                 new FleetController.BuyTruckDto("some-vin", 1000, 25);
         String requestBody = objectMapper.writeValueAsString(requestDto);
@@ -56,18 +64,20 @@ public class FleetControllerTest {
                 .andExpect(status().isOk());
 
 
-        verify(mockFleetService).buyTruck(Vin.of("some-vin"), 1000, 25);
+        InOrder inOrder = inOrder(mockFleetService, mockRentalService);
+        inOrder.verify(mockFleetService).buyTruck(Vin.of("some-vin"), 1000, 25);
+        inOrder.verify(mockRentalService).addTruck(io.pivotal.pal.wehaul.rental.domain.Vin.of("some-vin"), 25);
     }
 
     @Test
     public void getAllTrucks() throws Exception {
-        Truck truck1 = new Truck(Vin.of("some-vin-1"), 1000, TruckSize.LARGE, 25);
-        Truck truck2 = new Truck(Vin.of("some-vin-2"), 2000, TruckSize.SMALL, 15);
-        List<Truck> trucks = Arrays.asList(truck1, truck2);
-        when(mockFleetService.findAll()).thenReturn(trucks);
+        FleetTruck fleetTruck1 = new FleetTruck(Vin.of("some-vin-1"), 1000, 25);
+        FleetTruck fleetTruck2 = new FleetTruck(Vin.of("some-vin-2"), 2000, 15);
+        List<FleetTruck> fleetTrucks = Arrays.asList(fleetTruck1, fleetTruck2);
+        when(mockFleetService.findAll()).thenReturn(fleetTrucks);
 
-        FleetController.TruckDto truckDto1 = new FleetController.TruckDto("some-vin-1", "RENTABLE", 1000, "LARGE", 25);
-        FleetController.TruckDto truckDto2 = new FleetController.TruckDto("some-vin-2", "RENTABLE", 2000, "SMALL", 15);
+        FleetController.TruckDto truckDto1 = new FleetController.TruckDto("some-vin-1", "INSPECTABLE", 1000, 25);
+        FleetController.TruckDto truckDto2 = new FleetController.TruckDto("some-vin-2", "INSPECTABLE", 2000, 15);
         List<FleetController.TruckDto> truckDtos = Arrays.asList(truckDto1, truckDto2);
         String expectedResponseBody = objectMapper.writeValueAsString(truckDtos);
 
@@ -92,7 +102,9 @@ public class FleetControllerTest {
                 .andExpect(status().isOk());
 
 
-        verify(mockFleetService).sendForInspection(Vin.of("some-vin"));
+        InOrder inOrder = inOrder(mockFleetService, mockRentalService);
+        inOrder.verify(mockFleetService).sendForInspection(Vin.of("some-vin"));
+        inOrder.verify(mockRentalService).preventRenting(io.pivotal.pal.wehaul.rental.domain.Vin.of("some-vin"));
     }
 
     @Test
@@ -111,6 +123,8 @@ public class FleetControllerTest {
                 .andExpect(status().isOk());
 
 
-        verify(mockFleetService).returnFromInspection(Vin.of("some-vin"), "some-notes", 2000);
+        InOrder inOrder = inOrder(mockFleetService, mockRentalService);
+        inOrder.verify(mockFleetService).returnFromInspection(Vin.of("some-vin"), "some-notes", 2000);
+        inOrder.verify(mockRentalService).allowRenting(io.pivotal.pal.wehaul.rental.domain.Vin.of("some-vin"));
     }
 }
