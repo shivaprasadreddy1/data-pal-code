@@ -33,8 +33,10 @@ public class FleetTruckEventSourcedRepository implements FleetTruckRepository {
 
     @Override
     public FleetTruck save(FleetTruck fleetTruck) {
-        // TODO replace me
-        List<FleetTruckEventStoreEntity> eventEntities = Collections.emptyList();
+
+        List<FleetTruckEvent> fleetTruckEvents = fleetTruck.getDirtyEvents();
+
+        List<FleetTruckEventStoreEntity> eventEntities = mapEventToEntities(fleetTruckEvents, fleetTruck.getVersion());
 
         eventStoreRepository.save(eventEntities);
 
@@ -43,8 +45,15 @@ public class FleetTruckEventSourcedRepository implements FleetTruckRepository {
 
     @Override
     public FleetTruck findOne(Vin vin) {
-        // TODO replace me
-        return null;
+
+        List<FleetTruckEventStoreEntity> eventEntitiesByVin = eventStoreRepository.findAllByKeyVinOrderByKeyVersion(vin.getVin());
+        if (eventEntitiesByVin.size() < 1) {
+            return null;
+        }
+
+        List<FleetTruckEvent> fleetTruckEvents = mapEntitiesToEvents(eventEntitiesByVin);
+
+        return FleetTruck.fromEvents(fleetTruckEvents);
     }
 
     @Override
@@ -69,8 +78,10 @@ public class FleetTruckEventSourcedRepository implements FleetTruckRepository {
                     FleetTruckEvent event = events.get(i);
                     String eventJson = serializeEvent(event);
 
-                    // TODO replace me
-                    return (FleetTruckEventStoreEntity) null;
+                    FleetTruckEventStoreEntityKey eventEntityKey =
+                            new FleetTruckEventStoreEntityKey(event.getVin(), i + versionStart + 1);
+
+                    return new FleetTruckEventStoreEntity(eventEntityKey, event.getClass(), eventJson);
                 })
                 .collect(Collectors.toList());
     }
