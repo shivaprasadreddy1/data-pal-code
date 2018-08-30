@@ -64,7 +64,4 @@ public class FleetCommandService {
         fleetTruckRepository.save(truck);
     }
 
-    public Collection<FleetTruck> findAll() {
-        return fleetTruckRepository.findAll();
-    }
 }

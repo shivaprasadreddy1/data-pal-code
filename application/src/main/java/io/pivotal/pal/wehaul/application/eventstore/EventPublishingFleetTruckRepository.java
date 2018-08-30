@@ -30,6 +30,9 @@ public class EventPublishingFleetTruckRepository implements FleetTruckRepository
         dirtyEvents.stream()
                 .forEach(event -> applicationEventPublisher.publishEvent(event));
 
+        FleetTruckUpdated fleetTruckUpdated = new FleetTruckUpdated(fleetTruck);
+        this.applicationEventPublisher.publishEvent(fleetTruckUpdated);
+
         return savedFleetTruck;
     }
 
@@ -38,8 +41,4 @@ public class EventPublishingFleetTruckRepository implements FleetTruckRepository
         return fleetTruckRepository.findOne(vin);
     }
 
-    @Override
-    public List<FleetTruck> findAll() {
-        return fleetTruckRepository.findAll();
-    }
 }

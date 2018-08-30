@@ -68,6 +68,7 @@ public class EventPublishingFleetTruckRepositoryTest {
         when(mockFleetTruck.getStatus()).thenReturn(FleetTruckStatus.IN_INSPECTION);
         when(mockFleetTruck.getDirtyEvents())
                 .thenReturn(Arrays.asList(fleetTruckEvent1, fleetTruckEvent2));
+        when(mockFleetTruckRepository.save(any())).thenReturn(mockFleetTruck);
 
 
         repository.save(mockFleetTruck);
